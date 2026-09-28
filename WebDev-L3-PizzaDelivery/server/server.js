@@ -17,7 +17,7 @@ app.get("/", (req, res) => {
   res.send("Pizza Delivery API is running");
 });
 
-const PORT = 5000;
+const PORT = 5001;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
