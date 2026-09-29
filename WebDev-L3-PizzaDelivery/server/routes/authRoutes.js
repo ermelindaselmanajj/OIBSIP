@@ -3,14 +3,17 @@ const express = require("express");
 const {
   registerUser,
   loginUser,
+  verifyEmail,
+  forgotPassword,
+  resetPassword,
 } = require("../controllers/authController");
 
 const router = express.Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
-router.get("/test", (req, res) => {
-  res.send("Auth route works");
-});
+router.get("/verify-email/:token", verifyEmail);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password/:token", resetPassword);
 
 module.exports = router;
