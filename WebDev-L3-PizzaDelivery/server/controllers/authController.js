@@ -23,7 +23,6 @@ const registerUser = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
     const user = await User.create({
@@ -36,7 +35,11 @@ const registerUser = async (req, res) => {
 
     const verificationUrl = `http://127.0.0.1:5001/api/auth/verify-email/${verificationToken}`;
 
-    await sendEmail({
+    res.status(201).json({
+      message: "Registration successful. Please verify your email.",
+    });
+
+    sendEmail({
       to: user.email,
       subject: "Verify your Pizza Delivery account",
       html: `
@@ -44,12 +47,12 @@ const registerUser = async (req, res) => {
         <p>Please verify your email by clicking the link below:</p>
         <a href="${verificationUrl}">Verify Email</a>
       `,
-    });
-
-    res.status(201).json({
-      message: "Registration successful. Please verify your email.",
+    }).catch((error) => {
+      console.error("Verification email error:", error);
     });
   } catch (error) {
+    console.error("Registration error:", error);
+
     res.status(500).json({
       message: "Server error",
       error: error.message,
@@ -74,9 +77,9 @@ const verifyEmail = async (req, res) => {
 
     await user.save();
 
-    res.json({
-      message: "Email verified successfully",
-    });
+    return res.redirect(
+      "http://localhost:5174/login?verified=true"
+    );
   } catch (error) {
     res.status(500).json({
       message: "Server error",
@@ -97,19 +100,22 @@ const loginUser = async (req, res) => {
 
     const user = await User.findOne({ email });
 
-    if (!user.isVerified) {
-      return res.status(401).json({
-        message: "Please verify your email before logging in",
-      });
-    }
-
     if (!user) {
       return res.status(401).json({
         message: "Invalid credentials",
       });
     }
 
-    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!user.isVerified) {
+      return res.status(401).json({
+        message: "Please verify your email before logging in",
+      });
+    }
+
+    const passwordMatch = await bcrypt.compare(
+      password,
+      user.password
+    );
 
     if (!passwordMatch) {
       return res.status(401).json({
@@ -117,9 +123,13 @@ const loginUser = async (req, res) => {
       });
     }
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
-    });
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1d",
+      }
+    );
 
     res.json({
       message: "Login successful",
@@ -137,6 +147,7 @@ const loginUser = async (req, res) => {
     });
   }
 };
+
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -158,7 +169,11 @@ const forgotPassword = async (req, res) => {
 
     const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
 
-    await sendEmail({
+    res.json({
+      message: "Password reset email sent",
+    });
+
+    sendEmail({
       to: user.email,
       subject: "Reset your Pizza Delivery password",
       html: `
@@ -167,12 +182,12 @@ const forgotPassword = async (req, res) => {
         <a href="${resetUrl}">Reset Password</a>
         <p>This link expires in 15 minutes.</p>
       `,
-    });
-
-    res.json({
-      message: "Password reset email sent",
+    }).catch((error) => {
+      console.error("Password reset email error:", error);
     });
   } catch (error) {
+    console.error("Forgot password error:", error);
+
     res.status(500).json({
       message: "Server error",
       error: error.message,
@@ -183,6 +198,12 @@ const forgotPassword = async (req, res) => {
 const resetPassword = async (req, res) => {
   try {
     const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({
+        message: "Please enter a new password",
+      });
+    }
 
     const user = await User.findOne({
       resetPasswordToken: req.params.token,
@@ -196,7 +217,6 @@ const resetPassword = async (req, res) => {
     }
 
     user.password = await bcrypt.hash(password, 10);
-
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
 
