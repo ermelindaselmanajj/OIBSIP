@@ -197,3 +197,380 @@ a:hover {
   font-size: 13px;
   color: #777;
 }
+.dashboard-tagline {
+  display: block;
+  font-size: 13px;
+  color: #888;
+  margin-top: 3px;
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.builder-button,
+.hero-button {
+  border: none;
+  background: #e67e22;
+  color: white;
+  padding: 11px 18px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.hero-section {
+  margin-top: 35px;
+  min-height: 320px;
+  background: white;
+  border-radius: 24px;
+  padding: 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+.hero-section h1 {
+  font-size: 48px;
+  line-height: 1.1;
+  margin: 10px 0 18px;
+}
+
+.hero-section p {
+  max-width: 520px;
+  color: #666;
+  line-height: 1.7;
+}
+
+.hero-small,
+.section-small,
+.builder-step-text {
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #e67e22;
+}
+
+.hero-button {
+  margin-top: 25px;
+  padding: 14px 22px;
+}
+
+.hero-pizza {
+  font-size: 130px;
+}
+
+.pizza-section {
+  margin-top: 50px;
+}
+
+.section-heading {
+  margin-bottom: 25px;
+}
+
+.section-heading h2 {
+  margin-top: 5px;
+  font-size: 30px;
+}
+
+.pizza-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.pizza-card {
+  background: white;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+  transition: 0.2s;
+}
+
+.pizza-card:hover {
+  transform: translateY(-5px);
+}
+
+.pizza-image {
+  width: 100%;
+  height: 210px;
+  object-fit: cover;
+}
+
+.pizza-card-content {
+  padding: 20px;
+}
+
+.pizza-category {
+  font-size: 11px;
+  color: #e67e22;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.pizza-card h3 {
+  margin: 8px 0;
+  font-size: 21px;
+}
+
+.pizza-card p {
+  color: #777;
+  font-size: 14px;
+  min-height: 42px;
+}
+
+.pizza-card-footer {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pizza-card-footer strong {
+  font-size: 20px;
+}
+
+.pizza-card-footer button {
+  border: none;
+  background: #fff2e7;
+  color: #d35400;
+  padding: 9px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.builder-page {
+  min-height: 100vh;
+  background: #fff7f0;
+  padding: 40px 20px;
+}
+
+.builder-container {
+  max-width: 950px;
+  margin: auto;
+}
+
+.builder-top {
+  display: flex;
+  gap: 25px;
+  align-items: center;
+}
+
+.builder-top h1 {
+  font-size: 34px;
+}
+
+.builder-top p {
+  color: #777;
+  margin-top: 5px;
+}
+
+.back-button {
+  border: none;
+  background: white;
+  padding: 12px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.builder-progress {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 35px 0;
+}
+
+.progress-step {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #ddd;
+  color: #777;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.progress-step.active {
+  background: #e67e22;
+  color: white;
+}
+
+.builder-card {
+  background: white;
+  padding: 38px;
+  border-radius: 20px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+}
+
+.builder-card h2 {
+  font-size: 28px;
+  margin: 8px 0 25px;
+}
+
+.builder-description {
+  color: #777;
+  margin-top: -15px;
+  margin-bottom: 20px;
+}
+
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.option-card {
+  min-height: 100px;
+  border: 2px solid #eee;
+  background: white;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  align-items: center;
+  transition: 0.2s;
+}
+
+.option-card span {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.option-card:hover {
+  border-color: #e67e22;
+}
+
+.option-card.selected {
+  border-color: #e67e22;
+  background: #fff4e8;
+}
+
+.builder-navigation {
+  margin-top: 35px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.next-button {
+  width: auto;
+  min-width: 130px;
+}
+
+.next-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.secondary-button {
+  border: 1px solid #ddd;
+  background: white;
+  padding: 13px 22px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.pizza-summary {
+  margin-top: 25px;
+}
+
+.pizza-summary div {
+  display: flex;
+  justify-content: space-between;
+  padding: 18px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.pizza-summary span {
+  color: #777;
+}
+
+.summary-note {
+  background: #fff5eb;
+  padding: 14px;
+  border-radius: 10px;
+  margin-top: 20px;
+  color: #777;
+}
+
+@media (max-width: 800px) {
+  .pizza-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-section {
+    padding: 30px;
+  }
+
+  .hero-section h1 {
+    font-size: 36px;
+  }
+
+  .hero-pizza {
+    display: none;
+  }
+
+  .option-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dashboard-actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 500px) {
+  .option-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .builder-card {
+    padding: 25px 18px;
+  }
+}
+.option-card {
+  border: 2px solid #eee;
+  background: white;
+  border-radius: 14px;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  transition: 0.2s;
+}
+
+.option-image {
+  width: 100%;
+  height: 200px;
+  object-fit: contain;
+  padding: 20px;
+  background: #ffffff;
+}
+
+.option-card span {
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.option-card:hover {
+  border-color: #e67e22;
+  transform: translateY(-3px);
+}
+
+.option-card.selected {
+  border-color: #e67e22;
+  background: #fff4e8;
+  box-shadow: 0 6px 18px rgba(230, 126, 34, 0.18);
+}

@@ -6,6 +6,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import PizzaBuilder from "./pages/PizzaBuilder";
 
 function App() {
   return (
@@ -16,21 +17,23 @@ function App() {
 
       <Route path="/login" element={<Login />} />
 
-      <Route
-        path="/forgot-password"
-        element={<ForgotPassword />}
-      />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      <Route
-        path="/reset-password/:token"
-        element={<ResetPassword />}
-      />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
 
       <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/build-pizza"
+        element={
+          <ProtectedRoute>
+            <PizzaBuilder />
           </ProtectedRoute>
         }
       />

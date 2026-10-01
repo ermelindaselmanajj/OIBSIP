@@ -4,26 +4,27 @@ const cors = require("cors");
 require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
+const pizzaRoutes = require("./routes/pizzaRoutes");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.get("/test", (req, res) => {
-  res.send("Server test works");
-});
 
 app.use("/api/auth", authRoutes);
+app.use("/api/pizzas", pizzaRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected successfully"))
-  .catch((error) =>
-    console.log("MongoDB connection error:", error)
-  );
+  .catch((error) => console.log("MongoDB connection error:", error));
 
 app.get("/", (req, res) => {
   res.send("Pizza Delivery API is running");
+});
+
+app.get("/test", (req, res) => {
+  res.send("Server test works");
 });
 
 const PORT = 5001;
