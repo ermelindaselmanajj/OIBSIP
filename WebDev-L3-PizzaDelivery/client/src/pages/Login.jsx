@@ -3,13 +3,16 @@ import {
   Link,
   useNavigate,
   useSearchParams,
+  useLocation,
 } from "react-router-dom";
 import api from "../services/api";
+import { setToken } from "../services/session";
 
 function Login() {
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(location.state?.message || "");
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -25,7 +28,10 @@ function Login() {
         password,
       });
 
-      localStorage.setItem("token", response.data.token);
+      if (!response.data.token || response.data.user?.role !== "user") {
+        throw new Error("Invalid customer login response");
+      }
+      setToken("user", response.data.token);
 
       navigate("/dashboard");
     } catch (error) {
@@ -94,6 +100,7 @@ function Login() {
         )}
 
         <div className="auth-links">
+          <p><Link to="/admin/login">Admin login</Link></p>
           <p>
             <Link to="/forgot-password">
               Forgot password?

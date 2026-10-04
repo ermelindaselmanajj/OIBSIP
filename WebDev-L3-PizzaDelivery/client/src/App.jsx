@@ -7,6 +7,8 @@ import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PizzaBuilder from "./pages/PizzaBuilder";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
       <Route path="/register" element={<Register />} />
 
       <Route path="/login" element={<Login />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
 
       <Route path="/forgot-password" element={<ForgotPassword />} />
 

@@ -7,9 +7,9 @@ const { clientUrl, serverUrl } = require("../config/urls");
 
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password } = req.body || {};
 
-    if (!name || !email || !password) {
+    if (typeof name !== "string" || !name.trim() || typeof email !== "string" || !email.trim() || typeof password !== "string" || !password) {
       return res.status(400).json({
         message: "Please fill in all fields",
       });
@@ -62,7 +62,6 @@ const registerUser = async (req, res) => {
 
     res.status(500).json({
       message: "Server error",
-      error: error.message,
     });
   }
 };
@@ -90,16 +89,15 @@ const verifyEmail = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "Server error",
-      error: error.message,
     });
   }
 };
 
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
 
-    if (!email || !password) {
+    if (typeof email !== "string" || !email.trim() || typeof password !== "string" || !password) {
       return res.status(400).json({
         message: "Please enter email and password",
       });
@@ -131,10 +129,12 @@ const loginUser = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { userId: user._id },
+      { role: "user" },
       process.env.JWT_SECRET,
       {
         expiresIn: "1d",
+        subject: String(user._id),
+        algorithm: "HS256",
       }
     );
 
@@ -145,12 +145,12 @@ const loginUser = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: "user",
       },
     });
   } catch (error) {
     res.status(500).json({
       message: "Server error",
-      error: error.message,
     });
   }
 };
@@ -199,7 +199,6 @@ const forgotPassword = async (req, res) => {
 
     res.status(500).json({
       message: "Server error",
-      error: error.message,
     });
   }
 };
@@ -237,12 +236,16 @@ const resetPassword = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "Server error",
-      error: error.message,
     });
   }
 };
 
+const getCurrentUser = (req, res) => res.json({
+  user: { id: req.identity._id, name: req.identity.name, email: req.identity.email, role: "user" },
+});
+
 module.exports = {
+  getCurrentUser,
   registerUser,
   loginUser,
   verifyEmail,

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { clearToken } from "../services/session";
 
 function Dashboard() {
   const [pizzas, setPizzas] = useState([]);
@@ -42,7 +43,7 @@ function Dashboard() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    clearToken("user");
     navigate("/login");
   };
 
