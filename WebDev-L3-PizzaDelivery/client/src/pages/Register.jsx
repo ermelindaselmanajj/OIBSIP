@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 
@@ -9,10 +9,17 @@ function Register() {
     password: "",
   });
 
-  const [message, setMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!successMessage) return;
+    const timer = setTimeout(() => navigate("/login"), 3000);
+    return () => clearTimeout(timer);
+  }, [successMessage, navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -25,17 +32,15 @@ function Register() {
     e.preventDefault();
 
     setLoading(true);
+    setSuccessMessage("");
+    setErrorMessage("");
 
     try {
       const response = await api.post("/auth/register", formData);
 
-      setMessage(response.data.message);
-
-      setTimeout(() => {
-        navigate("/login");
-      }, 3000);
+      setSuccessMessage(response.data.message || "Account created successfully.");
     } catch (error) {
-      setMessage(
+      setErrorMessage(
         error.response?.data?.message || "Registration failed"
       );
     } finally {
@@ -85,19 +90,25 @@ function Register() {
           <button
             className="auth-button"
             type="submit"
-            disabled={loading}
+            disabled={loading || Boolean(successMessage)}
           >
             {loading ? "Creating account..." : "Create Account"}
           </button>
         </form>
 
-        {message && (
-          <div className="success-popup">
+        {errorMessage && (
+          <div className="auth-message error-message" role="alert">
+            {errorMessage}
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="success-popup" role="status">
             <div className="success-icon">✓</div>
 
             <h3>Registration Successful!</h3>
 
-            <p>{message}</p>
+            <p>{successMessage}</p>
 
             <p>
               Please check your email and verify your account.

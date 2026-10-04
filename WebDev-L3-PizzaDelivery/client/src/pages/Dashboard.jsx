@@ -5,23 +5,41 @@ import api from "../services/api";
 function Dashboard() {
   const [pizzas, setPizzas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
 
   const navigate = useNavigate();
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchPizzas = async () => {
       try {
-        const response = await api.get("/pizzas");
+        const response = await api.get("/pizzas", { signal: controller.signal });
+        if (controller.signal.aborted) return;
+        if (!Array.isArray(response.data)) {
+          throw new Error("Invalid pizza menu response");
+        }
         setPizzas(response.data);
       } catch (error) {
-        console.error("Failed to load pizzas:", error);
+        if (controller.signal.aborted) return;
+        setErrorMessage(
+          error.response?.data?.message ||
+            "Unable to load the pizza menu. Please try again."
+        );
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
     fetchPizzas();
-  }, []);
+    return () => controller.abort();
+  }, [retryCount]);
+
+  const retryMenu = () => {
+    setErrorMessage("");
+    setLoading(true);
+    setRetryCount((count) => count + 1);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -84,7 +102,18 @@ function Dashboard() {
           </div>
 
           {loading ? (
-            <p>Loading pizzas...</p>
+            <p role="status">Loading pizzas...</p>
+          ) : errorMessage ? (
+            <div className="auth-message error-message" role="alert">
+              <p>{errorMessage}</p>
+              <button className="builder-button" onClick={retryMenu}>
+                Retry
+              </button>
+            </div>
+          ) : pizzas.length === 0 ? (
+            <p role="status">
+              No pizzas are available right now. Please check back later.
+            </p>
           ) : (
             <div className="pizza-grid">
               {pizzas.map((pizza) => (

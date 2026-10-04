@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
+const { clientUrl, serverUrl } = require("../config/urls");
 
 const registerUser = async (req, res) => {
   try {
@@ -14,41 +15,47 @@ const registerUser = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ email });
+    let user = await User.findOne({ email });
 
-    if (existingUser) {
-      return res.status(400).json({
-        message: "User already exists",
+    if (user) {
+      if (user.isVerified || !(await bcrypt.compare(password, user.password))) {
+        return res.status(400).json({ message: "User already exists" });
+      }
+      // A delivery retry must never overwrite the existing account's identity.
+      if (!user.verificationToken) {
+        user.verificationToken = crypto.randomBytes(32).toString("hex");
+        await user.save();
+      }
+    } else {
+      user = await User.create({
+        name,
+        email,
+        password: await bcrypt.hash(password, 10),
+        verificationToken: crypto.randomBytes(32).toString("hex"),
+        isVerified: false,
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const verificationToken = crypto.randomBytes(32).toString("hex");
-
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      verificationToken,
-      isVerified: false,
-    });
-
-    const verificationUrl = `http://127.0.0.1:5001/api/auth/verify-email/${verificationToken}`;
-
-    res.status(201).json({
-      message: "Registration successful. Please verify your email.",
-    });
-
-    sendEmail({
-      to: user.email,
-      subject: "Verify your Pizza Delivery account",
-      html: `
-        <h2>Welcome to Pizza Delivery</h2>
-        <p>Please verify your email by clicking the link below:</p>
-        <a href="${verificationUrl}">Verify Email</a>
-      `,
-    }).catch((error) => {
+    const verificationUrl = `${serverUrl()}/api/auth/verify-email/${user.verificationToken}`;
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "Verify your Pizza Delivery account",
+        html: `
+          <h2>Welcome to Pizza Delivery</h2>
+          <p>Please verify your email by clicking the link below:</p>
+          <a href="${verificationUrl}">Verify Email</a>
+        `,
+      });
+    } catch (error) {
       console.error("Verification email error:", error);
+      return res.status(503).json({
+        message: "Verification email could not be sent. Retry registration with the same email and password.",
+      });
+    }
+
+    return res.status(201).json({
+      message: "Registration successful. Verification email accepted for delivery. Please check your inbox.",
     });
   } catch (error) {
     console.error("Registration error:", error);
@@ -78,7 +85,7 @@ const verifyEmail = async (req, res) => {
     await user.save();
 
     return res.redirect(
-      "http://localhost:5174/login?verified=true"
+      `${clientUrl()}/login?verified=true`
     );
   } catch (error) {
     res.status(500).json({
@@ -162,29 +169,31 @@ const forgotPassword = async (req, res) => {
 
     const resetToken = crypto.randomBytes(32).toString("hex");
 
+    const resetUrl = `${clientUrl()}/reset-password/${resetToken}`;
+
+    // Keep the existing reset link valid if SMTP fails. Do not roll back a
+    // shared DB record: a concurrent request may have saved a newer token.
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "Reset your Pizza Delivery password",
+        html: `
+          <h2>Password Reset</h2>
+          <p>Click the link below to reset your password:</p>
+          <a href="${resetUrl}">Reset Password</a>
+          <p>This link expires in 15 minutes.</p>
+        `,
+      });
+    } catch (error) {
+      console.error("Password reset email error:", error);
+      return res.status(503).json({ message: "Password reset email could not be sent. Please try again." });
+    }
+
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
-
     await user.save();
 
-    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
-
-    res.json({
-      message: "Password reset email sent",
-    });
-
-    sendEmail({
-      to: user.email,
-      subject: "Reset your Pizza Delivery password",
-      html: `
-        <h2>Password Reset</h2>
-        <p>Click the link below to reset your password:</p>
-        <a href="${resetUrl}">Reset Password</a>
-        <p>This link expires in 15 minutes.</p>
-      `,
-    }).catch((error) => {
-      console.error("Password reset email error:", error);
-    });
+    return res.json({ message: "Password reset email accepted for delivery. Please check your inbox." });
   } catch (error) {
     console.error("Forgot password error:", error);
 

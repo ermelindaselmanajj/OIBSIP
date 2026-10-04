@@ -574,3 +574,13 @@ a:hover {
   background: #fff4e8;
   box-shadow: 0 6px 18px rgba(230, 126, 34, 0.18);
 }
+
+.error-message {
+  color: #a52a20;
+  background: #fff0ee;
+  border: 1px solid #edb9b4;
+}
+
+.error-message button {
+  margin-top: 12px;
+}
