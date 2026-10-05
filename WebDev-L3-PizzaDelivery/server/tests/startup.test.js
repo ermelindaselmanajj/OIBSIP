@@ -9,6 +9,7 @@ function start(env) {
   const auth = {};
   const pizzas = {};
   const admin = {};
+  const inventory = {};
   const app = {
     use(...args) { state.middleware.push(args); },
     get(...args) { state.routes.push(args); },
@@ -26,20 +27,21 @@ function start(env) {
       if (name === 'cors') return () => 'cors';
       if (name === 'dotenv') return { config() { state.loadedEnv = true; } };
       if (name === './routes/authRoutes') return auth;
+      if (name === './routes/inventoryRoutes') return inventory;
       if (name === './routes/adminRoutes') return admin;
       if (name === './routes/pizzaRoutes') return pizzas;
       throw new Error(`Unexpected startup dependency: ${name}`);
     },
   });
-  return { state, auth, admin, pizzas };
+  return { state, auth, admin, pizzas, inventory };
 }
 
 test('server entry starts on default PORT and mounts auth/catalog without external IO', () => {
-  const { state, auth, admin, pizzas } = start({ MONGO_URI: 'mock://offline' });
+  const { state, auth, admin, pizzas, inventory } = start({ MONGO_URI: 'mock://offline' });
   assert.equal(state.port, 5001);
   assert.equal(state.loadedEnv, true);
   assert.deepEqual(state.connections, ['mock://offline']);
-  assert.deepEqual(state.middleware, [['cors'], ['json'], ['/api/auth', auth], ['/api/admin', admin], ['/api/pizzas', pizzas]]);
+  assert.deepEqual(state.middleware, [['cors'], ['json'], ['/api/auth', auth], ['/api/admin', admin], ['/api/pizzas', pizzas], ['/api/ingredients', inventory]]);
   assert.deepEqual(state.routes.map(([route]) => route), ['/', '/test']);
   let message;
   state.routes[0][1]({}, { send(value) { message = value; } });

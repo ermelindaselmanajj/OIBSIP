@@ -251,13 +251,14 @@ test('current-user/admin routes require the corresponding role and admin exposes
     const marker = {};
     const controllers = new Proxy({}, { get: () => () => {} });
     load(file, {
-      express: { Router: () => ({ get: (...args) => routes.push(['GET', ...args]), post: (...args) => routes.push(['POST', ...args]) }) },
+      express: { Router: () => ({ get: (...args) => routes.push(['GET', ...args]), post: (...args) => routes.push(['POST', ...args]), patch: (...args) => routes.push(['PATCH', ...args]) }) },
       '../controllers/authController': controllers,
       '../controllers/adminController': controllers,
+      '../controllers/inventoryController': controllers,
       '../middleware/auth': { requireRole: requested => { assert.equal(requested, role); return marker; } },
     });
     const me = routes.find(route => route[0] === 'GET' && route[1] === '/me');
     assert.ok(me); assert.equal(me[2], marker); assert.equal(typeof me[3], 'function');
-    if (role === 'admin') assert.deepEqual(routes.map(route => route[1]).sort(), ['/login', '/me']);
+    if (role === 'admin') assert.deepEqual(routes.map(route => route[1]).sort(), ['/inventory', '/inventory/:id', '/login', '/me']);
   }
 });

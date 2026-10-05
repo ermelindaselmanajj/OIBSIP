@@ -1,403 +1,192 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
+import IngredientOptions from "../components/builder/IngredientOptions";
+import SelectionSummary from "../components/builder/SelectionSummary";
+import { parseIngredients } from "../components/builder/ingredients";
+import { canAdvance, categories, emptySelection, refreshBuilder, selectIngredient } from "../components/builder/selection";
+import "../styles/builder.css";
 
-// BASES
-import classicThinImg from "../assets/pizza-builder/bases/classic-thin.jpg";
-import italianImg from "../assets/pizza-builder/bases/italian.jpg";
-import wholeWheatImg from "../assets/pizza-builder/bases/whole-wheat.jpg";
-import cheeseStuffedImg from "../assets/pizza-builder/bases/cheese-stuffed.webp";
-import glutenFreeImg from "../assets/pizza-builder/bases/gluten-free.jpg";
+const steps = ["Base", "Sauce", "Cheese", "Vegetables", "Review"];
+const titles = ["Start with a great base.", "Make it your kind of sauce.", "A cheese worth choosing.", "Add a little color.", "Made just the way you like it."];
 
-// SAUCES
-import classicTomatoImg from "../assets/pizza-builder/sauces/classic-tomato.avif";
-import bbqImg from "../assets/pizza-builder/sauces/bbq.avif";
-import garlicImg from "../assets/pizza-builder/sauces/garlic.webp";
-import pestoImg from "../assets/pizza-builder/sauces/pesto.webp";
-import spicyTomatoImg from "../assets/pizza-builder/sauces/spicy-tomato.avif";
-
-// CHEESES
-import mozzarellaImg from "../assets/pizza-builder/cheeses/mozzarella.jpg";
-import cheddarImg from "../assets/pizza-builder/cheeses/cheddar.jpg";
-import parmesanImg from "../assets/pizza-builder/cheeses/parmesan.webp";
-import fourCheeseImg from "../assets/pizza-builder/cheeses/four-cheese.webp";
-
-// VEGETABLES
-import mushroomsImg from "../assets/pizza-builder/vegetables/mushrooms.webp";
-import olivesImg from "../assets/pizza-builder/vegetables/olives.jpg";
-import peppersImg from "../assets/pizza-builder/vegetables/peppers.jpg";
-import onionsImg from "../assets/pizza-builder/vegetables/onions.jpg";
-import sweetCornImg from "../assets/pizza-builder/vegetables/sweet-corn.webp";
-import tomatoesImg from "../assets/pizza-builder/vegetables/tomatoes.webp";
-
-function PizzaBuilder() {
+export default function PizzaBuilder() {
   const navigate = useNavigate();
+  const [ingredients, setIngredients] = useState([]);
+  const [status, setStatus] = useState("loading");
+  const [error, setError] = useState("");
+  const [builder, setBuilder] = useState(() => ({ selection: emptySelection(), step: 1, notice: "" }));
+  const request = useRef({ sequence: 0, controller: null });
 
-  const [step, setStep] = useState(1);
-
-  const [pizza, setPizza] = useState({
-    base: "",
-    sauce: "",
-    cheese: "",
-    vegetables: [],
-  });
-
-  const bases = [
-    {
-      name: "Classic Thin",
-      image: classicThinImg,
-    },
-    {
-      name: "Italian",
-      image: italianImg,
-    },
-    {
-      name: "Whole Wheat",
-      image: wholeWheatImg,
-    },
-    {
-      name: "Cheese Stuffed",
-      image: cheeseStuffedImg,
-    },
-    {
-      name: "Gluten Free",
-      image: glutenFreeImg,
-    },
-  ];
-
-  const sauces = [
-    {
-      name: "Classic Tomato",
-      image: classicTomatoImg,
-    },
-    {
-      name: "BBQ",
-      image: bbqImg,
-    },
-    {
-      name: "Garlic",
-      image: garlicImg,
-    },
-    {
-      name: "Pesto",
-      image: pestoImg,
-    },
-    {
-      name: "Spicy Tomato",
-      image: spicyTomatoImg,
-    },
-  ];
-
-  const cheeses = [
-    {
-      name: "Mozzarella",
-      image: mozzarellaImg,
-    },
-    {
-      name: "Cheddar",
-      image: cheddarImg,
-    },
-    {
-      name: "Parmesan",
-      image: parmesanImg,
-    },
-    {
-      name: "Four Cheese",
-      image: fourCheeseImg,
-    },
-  ];
-
-  const vegetables = [
-    {
-      name: "Mushrooms",
-      image: mushroomsImg,
-    },
-    {
-      name: "Olives",
-      image: olivesImg,
-    },
-    {
-      name: "Peppers",
-      image: peppersImg,
-    },
-    {
-      name: "Onions",
-      image: onionsImg,
-    },
-    {
-      name: "Sweet Corn",
-      image: sweetCornImg,
-    },
-    {
-      name: "Tomatoes",
-      image: tomatoesImg,
-    },
-  ];
-
-  const selectOption = (field, value) => {
-    setPizza({
-      ...pizza,
-      [field]: value,
-    });
-  };
-
-  const toggleVegetable = (vegetable) => {
-    if (pizza.vegetables.includes(vegetable)) {
-      setPizza({
-        ...pizza,
-        vegetables: pizza.vegetables.filter((item) => item !== vegetable),
-      });
-    } else {
-      setPizza({
-        ...pizza,
-        vegetables: [...pizza.vegetables, vegetable],
-      });
+  const refresh = useCallback(async (requestedStep = null) => {
+    request.current.controller?.abort();
+    const controller = new AbortController();
+    const sequence = ++request.current.sequence;
+    request.current.controller = controller;
+    setStatus("loading");
+    setError("");
+    try {
+      const { data } = await api.get("/ingredients", { signal: controller.signal });
+      if (controller.signal.aborted || request.current.sequence !== sequence) return;
+      const items = parseIngredients(data);
+      setIngredients(items);
+      setBuilder((previous) => refreshBuilder(previous, items, requestedStep));
+      setStatus("ready");
+    } catch (failure) {
+      if (controller.signal.aborted || request.current.sequence !== sequence) return;
+      setError(failure.response?.data?.message || "We couldn't check ingredient availability. Please try again.");
+      setStatus("error");
     }
-  };
+  }, []);
 
-  const canContinue = () => {
-    if (step === 1) return pizza.base;
-    if (step === 2) return pizza.sauce;
-    if (step === 3) return pizza.cheese;
+  useEffect(() => {
+    let active = true;
+    const requests = request.current;
+    Promise.resolve().then(() => { if (active) refresh(); });
+    const onFocus = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    const onVisibility = onFocus;
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      active = false;
+      requests.controller?.abort();
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [refresh]);
 
-    return true;
+  const { selection, step, notice } = builder;
+  const advance = canAdvance(step, selection, ingredients, status);
+  const choose = (ingredient) => {
+    if (status !== "ready") return;
+    setBuilder((previous) => ({
+      ...previous,
+      selection: selectIngredient(previous.selection, ingredient, ingredients),
+      notice: "",
+    }));
   };
+  const move = (nextStep) => setBuilder((previous) => ({ ...previous, step: nextStep }));
 
   return (
-    <div className="builder-page">
-      <div className="builder-container">
-        <div className="builder-top">
-          <button
-            className="back-button"
-            onClick={() => navigate("/dashboard")}
-          >
-            ← Back
+    <main className="pb-page">
+      <div className="pb-shell">
+        <header className="pb-header">
+          <button className="pb-back" onClick={() => navigate("/dashboard")}>
+            ← Back to menu
           </button>
+          <span className="pb-brand">
+            Pizza Delivery <span aria-hidden="true">🍕</span>
+          </span>
+        </header>
 
-          <div>
-            <h1>Build Your Pizza 🍕</h1>
-            <p>Create your perfect pizza step by step.</p>
-          </div>
+        <div className="pb-intro">
+          <p className="pb-eyebrow">A PIZZA WITH YOUR NAME ON IT</p>
+          <h1>Make it yours.</h1>
+          <p>Good ingredients. Your favorite combination. One delicious creation.</p>
         </div>
 
-        <div className="builder-progress">
-          {[1, 2, 3, 4, 5].map((number) => (
-            <div
-              key={number}
-              className={
-                step >= number ? "progress-step active" : "progress-step"
-              }
+        <ol className="pb-progress" aria-label="Pizza building steps">
+          {steps.map((label, index) => (
+            <li
+              key={label}
+              className={step === index + 1 ? "pb-current" : step > index + 1 ? "pb-complete" : ""}
+              aria-current={step === index + 1 ? "step" : undefined}
             >
-              {number}
-            </div>
+              <span>{step > index + 1 ? "✓" : index + 1}</span>
+              {label}
+            </li>
           ))}
-        </div>
+        </ol>
 
-        <div className="builder-card">
-          {step === 1 && (
-            <>
-              <p className="builder-step-text">STEP 1 OF 5</p>
-
-              <h2>Choose your pizza base</h2>
-
-              <div className="option-grid">
-                {bases.map((base) => (
-                  <button
-                    key={base.name}
-                    type="button"
-                    className={
-                      pizza.base === base.name
-                        ? "option-card selected"
-                        : "option-card"
-                    }
-                    onClick={() => selectOption("base", base.name)}
-                  >
-                    <img
-                      src={base.image}
-                      alt={base.name}
-                      className="option-image"
-                    />
-
-                    <span>{base.name}</span>
-                  </button>
-                ))}
+        <div className="pb-layout">
+          <section className="pb-main" aria-busy={status === "loading"}>
+            <div className="pb-section-heading">
+              <div>
+                <p className="pb-eyebrow">STEP {step} OF 5</p>
+                <h2>{titles[step - 1]}</h2>
               </div>
-            </>
-          )}
+              <button
+                className="pb-refresh"
+                onClick={() => refresh()}
+                disabled={status === "loading"}
+              >
+                ↻ Refresh ingredients
+              </button>
+            </div>
 
-          {step === 2 && (
-            <>
-              <p className="builder-step-text">STEP 2 OF 5</p>
+            <p className="pb-description">
+              {step === 4
+                ? "Choose as many vegetables as you like, or keep it simple."
+                : step === 5
+                  ? "Review your choices below. Availability is checked against our current stock."
+                  : "Choose one available ingredient to continue."}
+            </p>
 
-              <h2>Choose your sauce</h2>
-
-              <div className="option-grid">
-                {sauces.map((sauce) => (
-                  <button
-                    key={sauce.name}
-                    type="button"
-                    className={
-                      pizza.sauce === sauce.name
-                        ? "option-card selected"
-                        : "option-card"
-                    }
-                    onClick={() => selectOption("sauce", sauce.name)}
-                  >
-                    <img
-                      src={sauce.image}
-                      alt={sauce.name}
-                      className="option-image"
-                    />
-
-                    <span>{sauce.name}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-
-          {step === 3 && (
-            <>
-              <p className="builder-step-text">STEP 3 OF 5</p>
-
-              <h2>Choose your cheese</h2>
-
-              <div className="option-grid">
-                {cheeses.map((cheese) => (
-                  <button
-                    key={cheese.name}
-                    type="button"
-                    className={
-                      pizza.cheese === cheese.name
-                        ? "option-card selected"
-                        : "option-card"
-                    }
-                    onClick={() => selectOption("cheese", cheese.name)}
-                  >
-                    <img
-                      src={cheese.image}
-                      alt={cheese.name}
-                      className="option-image"
-                    />
-
-                    <span>{cheese.name}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-
-          {step === 4 && (
-            <>
-              <p className="builder-step-text">STEP 4 OF 5</p>
-
-              <h2>Choose your vegetables</h2>
-
-              <p className="builder-description">
-                You can choose more than one.
+            {status === "loading" && (
+              <p className="pb-status" role="status">
+                Checking fresh ingredient availability…
               </p>
-
-              <div className="option-grid">
-                {vegetables.map((vegetable) => (
-                  <button
-                    key={vegetable.name}
-                    type="button"
-                    className={
-                      pizza.vegetables.includes(vegetable.name)
-                        ? "option-card selected"
-                        : "option-card"
-                    }
-                    onClick={() => toggleVegetable(vegetable.name)}
-                  >
-                    <img
-                      src={vegetable.image}
-                      alt={vegetable.name}
-                      className="option-image"
-                    />
-
-                    <span>{vegetable.name}</span>
-                  </button>
-                ))}
+            )}
+            {status === "error" && (
+              <div className="pb-error" role="alert">
+                <p>{error}</p>
+                <button className="pb-primary" onClick={() => refresh()}>
+                  Retry
+                </button>
               </div>
-            </>
-          )}
+            )}
+            {notice && <p className="pb-notice" role="status">{notice}</p>}
 
-          {step === 5 && (
-            <>
-              <p className="builder-step-text">STEP 5 OF 5</p>
-
-              <h2>Your Pizza</h2>
-
-              <div className="pizza-summary">
-                <div>
-                  <span>Base</span>
-                  <strong>{pizza.base}</strong>
-                </div>
-
-                <div>
-                  <span>Sauce</span>
-                  <strong>{pizza.sauce}</strong>
-                </div>
-
-                <div>
-                  <span>Cheese</span>
-                  <strong>{pizza.cheese}</strong>
-                </div>
-
-                <div>
-                  <span>Vegetables</span>
-
-                  <strong>
-                    {pizza.vegetables.length > 0
-                      ? pizza.vegetables.join(", ")
-                      : "No vegetables"}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="summary-note">
-                <strong>Your custom pizza is ready!</strong>
-
-                <p>Review your selections before continuing to your order.</p>
-              </div>
-            </>
-          )}
-
-          <div className="builder-navigation">
-            {step > 1 && (
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setStep(step - 1)}
-              >
-                Previous
-              </button>
+            {status === "ready" && step < 5 && (
+              <IngredientOptions
+                ingredients={ingredients.filter((item) => item.category === categories[step - 1])}
+                inventoryEmpty={ingredients.length === 0}
+                selection={selection}
+                blocked={status !== "ready"}
+                onSelect={choose}
+              />
+            )}
+            {status === "ready" && step === 5 && (
+              <SelectionSummary selection={selection} ingredients={ingredients} final />
             )}
 
-            {step < 5 && (
-              <button
-                type="button"
-                className="auth-button next-button"
-                disabled={!canContinue()}
-                onClick={() => setStep(step + 1)}
-              >
-                Continue
-              </button>
-            )}
+            <div className="pb-navigation">
+              {step > 1 && (
+                <button className="pb-secondary" onClick={() => move(step - 1)}>
+                  ← Previous
+                </button>
+              )}
+              {step < 5 ? (
+                <button
+                  className="pb-primary"
+                  disabled={!advance}
+                  onClick={() => { if (advance) refresh(step + 1); }}
+                >
+                  {step === 4 ? "Review my pizza" : "Continue"} →
+                </button>
+              ) : (
+                <button
+                  className="pb-primary"
+                  onClick={() => refresh()}
+                  disabled={status === "loading"}
+                >
+                  Refresh availability
+                </button>
+              )}
+            </div>
+          </section>
 
-            {step === 5 && (
-              <button
-                type="button"
-                className="auth-button next-button"
-                onClick={() => alert("Order Summary will be implemented next!")}
-              >
-                Continue to Order
-              </button>
-            )}
-          </div>
+          <aside className="pb-sidebar">
+            <SelectionSummary selection={selection} ingredients={ingredients} />
+            <div className="pb-side-note">
+              <span aria-hidden="true">✦</span>
+              <p>Made your way.<br />Only available ingredients can be selected.</p>
+            </div>
+          </aside>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
-
-export default PizzaBuilder;

@@ -5,6 +5,7 @@ require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const inventoryRoutes = require("./routes/inventoryRoutes");
 const pizzaRoutes = require("./routes/pizzaRoutes");
 
 const app = express();
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/pizzas", pizzaRoutes);
+app.use("/api/ingredients", inventoryRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI)

@@ -1,7 +1,10 @@
 const express = require("express");
 const { loginAdmin, getCurrentAdmin } = require("../controllers/adminController");
 const { requireRole } = require("../middleware/auth");
+const { getInventory, updateInventory } = require("../controllers/inventoryController");
 const router = express.Router();
+router.get("/inventory", requireRole("admin"), getInventory);
+router.patch("/inventory/:id", requireRole("admin"), updateInventory);
 router.post("/login", loginAdmin);
 router.get("/me", requireRole("admin"), getCurrentAdmin);
 module.exports = router;

@@ -5,10 +5,19 @@
 }
 
 body {
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #fff4e6, #ffe0cc);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #fbf6ef;
   min-height: 100vh;
-  color: #222;
+  color: #2c211c;
+}
+
+:focus-visible {
+  outline: 3px solid #9c4212;
+  outline-offset: 3px;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
 
 a {
