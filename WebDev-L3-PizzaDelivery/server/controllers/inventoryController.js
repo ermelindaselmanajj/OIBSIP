@@ -1,16 +1,17 @@
 const Inventory = require("../models/Inventory");
+const { CURRENCY, isEURPrice } = require("../services/pricing");
 
 const inventoryStatus = ({ stock, threshold }) => stock === 0 ? "out-of-stock" : stock <= threshold ? "low-stock" : "available";
 const inventoryItem = (item) => ({
   id: String(item._id), name: item.name, category: item.category,
-  stock: item.stock, threshold: item.threshold,
+  stock: item.stock, threshold: item.threshold, priceMinor: isEURPrice(item) ? item.priceMinor : null,
   status: inventoryStatus(item), updatedAt: item.updatedAt,
 });
 
 const getInventory = async (req, res) => {
   try {
     const items = await Inventory.find().sort({ category: 1, name: 1 });
-    return res.json({ items: items.map(inventoryItem) });
+    return res.json({ currency: CURRENCY, items: items.map(inventoryItem) });
   } catch {
     return res.status(500).json({ message: "Server error" });
   }
@@ -43,8 +44,8 @@ const updateInventory = async (req, res) => {
 const getIngredients = async (req, res) => {
   try {
     const items = await Inventory.find().sort({ category: 1, name: 1 });
-    return res.json({ ingredients: items.map(item => ({
-      id: String(item._id), name: item.name, category: item.category, available: item.stock > 0,
+    return res.json({ currency: CURRENCY, ingredients: items.map(item => ({
+      id: String(item._id), name: item.name, category: item.category, available: item.stock > 0, priceMinor: isEURPrice(item) ? item.priceMinor : null,
     })) });
   } catch {
     return res.status(500).json({ message: "Server error" });

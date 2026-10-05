@@ -15,18 +15,34 @@ function load(file, deps) {
 }
 function res() { return { statusCode: 200, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } }; }
 const record = (stock, threshold = 20) => ({ _id: id, name: 'Italian', category: 'base', stock, threshold, updatedAt: new Date('2026-01-01') });
-function controllers(Model) { return load('controllers/inventoryController.js', { '../models/Inventory': Model }); }
+function controllers(Model) { return load('controllers/inventoryController.js', { '../models/Inventory': Model, '../services/pricing': require('../services/pricing') }); }
 
 test('inventory status boundaries and user availability include zero stock without private counts', async () => {
   const rows = [record(0), record(1), record(20), record(21)];
   const api = controllers({ find: () => ({ sort: async () => rows }) });
   const admin = res(); await api.getInventory({}, admin);
   assert.deepEqual(Array.from(admin.body.items, item => item.status), ['out-of-stock', 'low-stock', 'low-stock', 'available']);
-  assert.deepEqual(Object.keys(admin.body.items[0]).sort(), ['category', 'id', 'name', 'status', 'stock', 'threshold', 'updatedAt']);
+  assert.deepEqual(Object.keys(admin.body.items[0]).sort(), ['category', 'id', 'name', 'priceMinor', 'status', 'stock', 'threshold', 'updatedAt']);
   const user = res(); await api.getIngredients({}, user);
+  assert.equal(user.body.currency, 'EUR');
+  assert.equal(admin.body.currency, 'EUR');
   assert.equal(user.body.ingredients.length, 4);
   assert.deepEqual(Array.from(user.body.ingredients, item => item.available), [false, true, true, true]);
-  assert.deepEqual(Object.keys(user.body.ingredients[0]).sort(), ['available', 'category', 'id', 'name']);
+  assert.deepEqual(Object.keys(user.body.ingredients[0]).sort(), ['available', 'category', 'id', 'name', 'priceMinor']);
+});
+
+test('inventory exposes only labelled EUR prices, never relabels unconverted prices', async () => {
+  const rows = [
+    { ...record(20), priceMinor: 10900 },
+    { ...record(20), priceCurrency: 'INR', priceMinor: 10900 },
+    { ...record(20), priceCurrency: 'EUR', priceMinor: 400 },
+    { ...record(20), priceCurrency: 'EUR', priceMinor: 0 },
+  ];
+  const api = controllers({ find: () => ({ sort: async () => rows }) });
+  for (const method of ['getInventory', 'getIngredients']) {
+    const response = res(); await api[method]({}, response);
+    assert.deepEqual(Array.from(response.body.items || response.body.ingredients, item => item.priceMinor), [null, null, 400, 0]);
+  }
 });
 
 test('PATCH rejects invalid values, unknown fields and empty bodies without touching DB', async () => {

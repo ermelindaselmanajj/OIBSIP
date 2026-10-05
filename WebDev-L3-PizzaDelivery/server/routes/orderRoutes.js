@@ -1,0 +1,10 @@
+const express = require("express");
+const { requireRole } = require("../middleware/auth");
+const { quoteOrder, createOrder, getOrder, getOrders } = require("../controllers/orderController");
+const router = express.Router();
+router.use(requireRole("user"));
+router.post("/quote", quoteOrder);
+router.post("/", createOrder);
+router.get("/", getOrders);
+router.get("/:id", getOrder);
+module.exports = router;

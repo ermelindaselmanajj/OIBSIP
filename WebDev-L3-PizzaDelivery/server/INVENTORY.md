@@ -1,12 +1,16 @@
 # Inventory and ingredient availability
 
-`GET /api/admin/inventory` requires an authenticated administrator and returns `{items:[{id,name,category,stock,threshold,status,updatedAt}]}`. Status is `out-of-stock` for stock 0, `low-stock` for positive stock at or below the threshold, and `available` above the threshold.
+`GET /api/admin/inventory` requires an authenticated administrator and returns `{currency:"EUR",items:[{id,name,category,stock,threshold,priceMinor,status,updatedAt}]}`. Status is `out-of-stock` for stock 0, `low-stock` for positive stock at or below the threshold, and `available` above the threshold.
 
 `PATCH /api/admin/inventory/:id` requires an administrator. Send stock, threshold, or both as numeric nonnegative safe integers; zero is allowed. Unknown fields, numeric strings, fractions, invalid IDs and empty bodies receive 400. Missing items receive 404. Missing/invalid sessions receive 401 and valid user sessions receive 403. Database failures return a generic 500. This phase supports manual updates only and does not decrement stock.
 
-`GET /api/ingredients` requires a verified user session. It returns `{ingredients:[{id,name,category,available}]}`, including out-of-stock items with available=false. It does not expose stock counts or thresholds. Administrators receive 403 for this user endpoint.
+`GET /api/ingredients` requires a verified user session. It returns `{currency:"EUR",ingredients:[{id,name,category,available,priceMinor}]}`, including out-of-stock items with available=false. It does not expose stock counts or thresholds. Administrators receive 403 for this user endpoint.
 
 Categories are base, sauce, cheese and vegetable. Names are trimmed and internal whitespace is collapsed. A unique index on category and name prevents duplicate exact options. Stock and threshold have schema validation for nonnegative safe integers.
+
+Prices use integer euro cents: 100 cents = €1. Inventory records need `priceCurrency:"EUR"` and a nonnegative safe-integer `priceMinor`; unconverted or invalid prices appear as null and prevent quoting. Run `npm run seed-prices` manually to apply the EUR demo prices defined in `scripts/seedPrices.js` to known ingredients with missing/legacy currency or missing EUR prices. It preserves existing EUR prices, IDs, stock, thresholds and timestamps; repeated runs do not overwrite already-priced EUR records. Unknown ingredients remain unpriced. The stock/threshold update endpoint does not edit prices.
+
+`POST /api/orders/quote` calculates current EUR prices and checks availability for quantities 1–10. `POST /api/orders` validates the quote fingerprint and uses a user-scoped idempotency key to persist one `pending_payment` snapshot across retries. Owned order summaries remain readable after refresh. Existing INR snapshots are preserved and marked `checkoutEligible:false`; users can rebuild their choices using current EUR prices. Pending orders do not reserve or decrement stock, and this phase does not process payment.
 
 To populate the 20 builder options, manually run `npm run seed-inventory` from server/. It loads server/.env using an absolute path and initializes the unique index before inserting. New entries receive stock 50 and threshold 20. Existing entries, including edited stock, thresholds and timestamps, are preserved using only $setOnInsert. Repeated and concurrent runs do not overwrite or delete records. If legacy duplicates prevent the index, the script fails and reports a generic message; review those records manually. Failures after some inserts may leave a partial seed; rerunning safely fills missing options. Database connections are closed on success or failure. Never use the unrelated destructive pizza seed as an inventory seed.
 

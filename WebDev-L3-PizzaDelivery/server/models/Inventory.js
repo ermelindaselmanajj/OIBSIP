@@ -15,6 +15,12 @@ const inventorySchema = new mongoose.Schema(
       required: true,
     },
 
+    priceCurrency: { type: String, enum: ["EUR"] },
+    priceMinor: {
+      type: Number, min: 0,
+      validate: { validator: value => value === undefined || (Number.isSafeInteger(value) && value >= 0), message: "Price must be a nonnegative safe integer" },
+    },
+
     stock: {
       type: Number,
       required: true,

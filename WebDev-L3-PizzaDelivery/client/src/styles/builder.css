@@ -80,3 +80,36 @@
 @media(max-width:1000px) { .pb-layout { grid-template-columns:minmax(0,1fr) 270px; gap:20px; } .pb-main { padding:22px; } .pb-options { grid-template-columns:repeat(2,minmax(0,1fr)); } .pb-section-heading { flex-direction:column; gap:0; margin-bottom:15px; } .pb-progress { gap:20px; } }
 @media(max-width:740px) { .pb-page { padding:18px 18px 40px; } .pb-header { padding-bottom:16px; } .pb-brand { font-size:17px; } .pb-back { font-size:12px; } .pb-intro { padding:28px 0 24px; } .pb-intro h1 { letter-spacing:-1px; } .pb-layout { grid-template-columns:1fr; } .pb-main { padding:20px 16px; } .pb-progress { justify-content:space-between; gap:6px; margin-bottom:24px; } .pb-progress li { flex-direction:column; gap:6px; font-size:10px; } .pb-progress li > span { width:27px; height:27px; } .pb-section-heading h2 { font-size:26px; } .pb-option-copy { padding:11px 9px; } .pb-summary { padding:22px; } .pb-sidebar .pb-summary h2 { font-size:25px; } .pb-navigation { gap:8px; } .pb-primary,.pb-secondary { padding:11px 13px; } }
 @media(prefers-reduced-motion:reduce) { .pb-option { transition:none; } }
+
+/* The review and saved order use the same ingredient design and money formatter. */
+.pb-header { flex-wrap:wrap; gap:8px; }
+.pb-review-price { margin-top:24px; }
+.pb-quantity { display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin:22px 0; }
+.pb-quantity label { font-size:14px; font-weight:650; }
+.pb-quantity select { min-height:44px; border:1px solid #d6c3b3; border-radius:8px; padding:9px 28px 9px 12px; color:#2c211c; background:white; font:inherit; }
+.pb-quantity select:focus-visible { outline:3px solid #b94d16; outline-offset:3px; }
+.pb-quantity p { width:100%; font-size:12px; color:#76685d; line-height:1.7; }
+.pb-pricing { margin:20px 0; }
+.pb-pricing h2 { font-size:25px; margin-bottom:20px; }
+.pb-price-table-wrap { max-width:100%; overflow-x:auto; }
+.pb-price-table { border-collapse:collapse; width:100%; font-size:12px; }
+.pb-price-table th,.pb-price-table td { padding:12px 7px; border-bottom:1px solid #e7d6c8; text-align:right; white-space:nowrap; }
+.pb-price-table th:first-child { text-align:left; white-space:normal; }
+.pb-price-table thead th { color:#76685d; font-size:11px; font-weight:650; }
+.pb-price-table tbody th { font-weight:600; }
+.pb-price-table tbody th span { display:block; color:#76685d; font-size:10px; font-weight:400; text-transform:capitalize; margin-top:3px; }
+.pb-totals { margin-top:18px; }
+.pb-totals > div { display:flex; justify-content:space-between; gap:16px; margin:12px 0; font-size:14px; }
+.pb-totals > div:last-child { border-top:1px solid #e7d6c8; padding-top:16px; font-size:18px; font-weight:700; }
+.pb-review-price > .pb-summary-note { margin:20px 0; }
+.pb-order-shell { max-width:920px; }
+.pb-order-heading { display:flex; justify-content:space-between; gap:16px; align-items:center; flex-wrap:wrap; }
+.pb-order-heading h2 { margin:8px 0; font-size:30px; }
+.pb-payment-badge { border:1px solid #dfc299; border-radius:99px; padding:8px 14px; background:#fff0db; color:#6b4b23; font-size:12px; font-weight:650; }
+.pb-order-details { display:flex; flex-wrap:wrap; gap:20px 40px; margin:25px 0; }
+.pb-order-details dt { font-size:11px; color:#76685d; margin-bottom:6px; }
+.pb-order-details dd { font-size:13px; overflow-wrap:anywhere; }
+.pb-button-link { display:inline-flex; align-items:center; min-height:44px; text-decoration:none; }
+.pb-button-link:hover { color:white; text-decoration:none; }
+.pb-page button:disabled { cursor:not-allowed; }
+@media(max-width:500px) { .pb-order-shell .pb-navigation { flex-wrap:wrap; justify-content:flex-start; } .pb-price-table th,.pb-price-table td { padding:10px 4px; } .pb-price-table { font-size:11px; } }

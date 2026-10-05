@@ -9,6 +9,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import PizzaBuilder from "./pages/PizzaBuilder";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import OrderSummary from "./pages/OrderSummary";
 
 function App() {
   return (
@@ -32,6 +33,10 @@ function App() {
             <Dashboard />
           </ProtectedRoute>
         }
+      />
+      <Route
+        path="/orders/:id"
+        element={<ProtectedRoute><OrderSummary /></ProtectedRoute>}
       />
       <Route
         path="/build-pizza"

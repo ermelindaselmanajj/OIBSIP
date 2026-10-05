@@ -34,7 +34,7 @@ test('HTTP inventory endpoints compose real Express routes, JWT middleware and r
     '../models/User': { findById: async id => id === userId ? { _id: userId, isVerified: true } : null },
     '../models/Admin': { findById: async id => id === adminId ? { _id: adminId } : null },
   });
-  const inventory = load('controllers/inventoryController.js', { '../models/Inventory': Model });
+  const inventory = load('controllers/inventoryController.js', { '../models/Inventory': Model, '../services/pricing': require('../services/pricing') });
   const adminRoutes = load('routes/adminRoutes.js', {
     express, '../middleware/auth': middleware, '../controllers/inventoryController': inventory,
     '../controllers/adminController': { loginAdmin() {}, getCurrentAdmin() {} },
