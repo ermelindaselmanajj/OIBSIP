@@ -6,11 +6,7 @@ const ensureIndexes = () => {
   if (!indexesReady) indexesReady = Order.createIndexes().catch(failure => { indexesReady = undefined; throw failure; });
   return indexesReady;
 };
-const profile = order => ({
-  id: String(order._id), status: order.status, currency: order.currency, checkoutEligible: order.currency === CURRENCY, quantity: order.quantity,
-  items: order.items.map(item => ({ ingredientId: String(item.ingredientId), name: item.name, category: item.category, unitPriceMinor: item.unitPriceMinor, quantity: item.quantity, lineTotalMinor: item.lineTotalMinor })),
-  unitTotalMinor: order.unitTotalMinor, totalMinor: order.totalMinor, createdAt: order.createdAt,
-});
+const { profile, parseList, supportedFilter } = require("../services/orderTracking");
 const failure = (res, cause) => {
   if (!cause.status) return res.status(500).json({ message: "Server error" });
   const body = { message: cause.message, code: cause.code };
@@ -40,7 +36,7 @@ const createOrder = async (req, res) => {
     }
     try {
       const { fingerprint, ...snapshot } = quote;
-      const order = await Order.create({ ...owner, ...snapshot, selectionHash: payloadHash, status: "pending_payment" });
+      const order = await Order.create({ ...owner, ...snapshot, selectionHash: payloadHash, status: "pending_payment", paymentStatus: "pending", fulfillmentStatus: null, fulfillmentHistory: [], confirmedAt: null });
       return res.status(201).json({ order: profile(order) });
     } catch (cause) {
       if (cause.code !== 11000) throw cause;
@@ -53,15 +49,23 @@ const createOrder = async (req, res) => {
 const getOrder = async (req, res) => {
   if (typeof req.params.id !== "string" || !/^[a-f\d]{24}$/i.test(req.params.id)) return res.status(400).json({ message: "Invalid order ID" });
   try {
-    const order = await Order.findOne({ _id: req.params.id, user: req.identity._id, status: "pending_payment" });
+    const order = await Order.findOne({ _id: req.params.id, user: req.identity._id, ...supportedFilter() });
     if (!order) return res.status(404).json({ message: "Order not found" });
     return res.json({ order: profile(order) });
   } catch (cause) { return failure(res, cause); }
 };
 const getOrders = async (req, res) => {
+  let options;
+  try { options = parseList(req.query); }
+  catch { return res.status(400).json({ message: "Invalid order filters or pagination" }); }
   try {
-    const orders = await Order.find({ user: req.identity._id, status: "pending_payment" }).sort({ createdAt: -1 });
-    return res.json({ orders: orders.map(profile) });
+    const { page, limit } = options;
+    const filter = { ...options.filter, user: req.identity._id };
+    const [orders, total] = await Promise.all([
+      Order.find(filter).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * limit).limit(limit),
+      Order.countDocuments(filter),
+    ]);
+    return res.json({ orders: orders.map(profile), pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
   } catch (cause) { return failure(res, cause); }
 };
 module.exports = { quoteOrder, createOrder, getOrder, getOrders };

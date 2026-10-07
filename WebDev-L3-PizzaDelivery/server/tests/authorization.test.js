@@ -255,10 +255,11 @@ test('current-user/admin routes require the corresponding role and admin exposes
       '../controllers/authController': controllers,
       '../controllers/adminController': controllers,
       '../controllers/inventoryController': controllers,
+      '../controllers/adminOrderController': controllers,
       '../middleware/auth': { requireRole: requested => { assert.equal(requested, role); return marker; } },
     });
     const me = routes.find(route => route[0] === 'GET' && route[1] === '/me');
     assert.ok(me); assert.equal(me[2], marker); assert.equal(typeof me[3], 'function');
-    if (role === 'admin') assert.deepEqual(routes.map(route => route[1]).sort(), ['/inventory', '/inventory/:id', '/login', '/me']);
+    if (role === 'admin') assert.deepEqual(routes.map(route => route[1]).sort(), ['/inventory', '/inventory/:id', '/login', '/me', '/orders', '/orders/:id', '/orders/:id/status']);
   }
 });

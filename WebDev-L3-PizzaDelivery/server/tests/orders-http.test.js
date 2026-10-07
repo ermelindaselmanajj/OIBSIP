@@ -15,8 +15,10 @@ test('HTTP orders enforce JWT roles, save authoritative pending snapshot, replay
  const ingredients=['base','sauce','cheese'].map((category,i)=>({_id:String(i+4).repeat(24),category,name:category,stock:5,priceCurrency:'EUR',priceMinor:[350,50,125][i]}));
  const selection={baseId:ingredients[0]._id,sauceId:ingredients[1]._id,cheeseId:ingredients[2]._id,vegetableIds:[],quantity:2};
  const saved=[];
- const Model={createIndexes:async()=>{},findOne:async query=>saved.find(row=>Object.entries(query).every(([key,val])=>String(row[key])===String(val)))||null,
-  find:query=>({sort:async()=>saved.filter(row=>Object.entries(query).every(([key,val])=>String(row[key])===String(val)))}),
+ const {matches,queryChain}=require('./orderMockHelpers');
+ const Model={createIndexes:async()=>{},findOne:async query=>saved.find(row=>matches(row,query))||null,
+  find:query=>queryChain(saved,query),countDocuments:async query=>saved.filter(row=>matches(row,query)).length,
+  findOneAndUpdate:async(query,update)=>{await new Promise(resolve=>setImmediate(resolve));const row=saved.find(row=>matches(row,query));if(!row)return null;Object.assign(row,update.$set);row.fulfillmentHistory.push(update.$push.fulfillmentHistory);row.updatedAt=new Date();return row;},
   create:async value=>{const row={...value,_id:'999999999999999999999999',createdAt:new Date()};saved.push(row);return row;},
  };
  const quote=load('services/orderQuote.js',{'../models/Inventory':{find:async()=>ingredients}});
@@ -26,7 +28,9 @@ test('HTTP orders enforce JWT roles, save authoritative pending snapshot, replay
   '../models/Admin':{findById:async id=>id===admin?{_id:id}:null},
  });
  const routes=load('routes/orderRoutes.js',{express,'../controllers/orderController':controller,'../middleware/auth':middleware});
- const app=express();app.use(express.json());app.use('/api/orders',routes);
+ const adminController=load('controllers/adminOrderController.js',{'../models/Order':Model});
+ const adminRoutes=load('routes/adminRoutes.js',{express,'../middleware/auth':middleware,'../controllers/adminOrderController':adminController,'../controllers/adminController':{loginAdmin(){},getCurrentAdmin(){}},'../controllers/inventoryController':{getInventory(){},updateInventory(){}}});
+ const app=express();app.use(express.json());app.use('/api/orders',routes);app.use('/api/admin',adminRoutes);
  const server=http.createServer(app);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});t.after(()=>new Promise(resolve=>server.close(resolve)));
  const tokens={owner:jwt.sign({role:'user'},secret,{algorithm:'HS256',subject:users[0],expiresIn:'1d'}),other:jwt.sign({role:'user'},secret,{algorithm:'HS256',subject:users[1],expiresIn:'1d'}),admin:jwt.sign({role:'admin'},secret,{algorithm:'HS256',subject:admin,expiresIn:'1d'})};
  const request=(method,url,role,body)=>new Promise((resolve,reject)=>{
@@ -48,5 +52,22 @@ test('HTTP orders enforce JWT roles, save authoritative pending snapshot, replay
  ingredients[0].stock=0;ingredients[0].priceMinor++;
  const replay=await request('POST','/api/orders','owner',body);assert.equal(replay.status,200);assert.equal(replay.body.order.totalMinor,1050);assert.equal(saved.length,1);
  assert.equal((await request('POST','/api/orders','owner',{...body,quantity:3})).body.code,'IDEMPOTENCY_CONFLICT');
- assert.equal(saved[0].paymentStatus,undefined);assert.equal(saved[0].orderStatus,undefined);
+ assert.equal(saved[0].paymentStatus,'pending');assert.equal(saved[0].orderStatus,undefined);
+ const fixture=require('./fixtures/trackingOrders').confirmedOrder({_id:'aaaaaaaaaaaaaaaaaaaaaaaa',user:users[0]});saved.push(fixture);
+ assert.equal((await request('GET','/api/admin/orders')).status,401);
+ assert.equal((await request('GET','/api/admin/orders','owner')).status,403);
+ const adminList=await request('GET','/api/admin/orders?paymentStatus=paid&limit=1','admin');assert.equal(adminList.status,200);assert.equal(adminList.body.pagination.total,1);assert.equal(adminList.body.orders[0].id,fixture._id);
+ assert.equal((await request('GET','/api/admin/orders?limit=101','admin')).status,400);
+ const statusUrl=`/api/admin/orders/${fixture._id}/status`;
+ const transition={status:'in_kitchen',expectedStatus:'order_received'};
+ assert.equal((await request('PATCH',statusUrl,null,transition)).status,401);
+ assert.equal((await request('PATCH',statusUrl,'owner',transition)).status,403);
+ assert.equal((await request('PATCH',`/api/admin/orders/${id}/status`,'admin',transition)).status,409);
+ const advanced=await Promise.all([request('PATCH',statusUrl,'admin',transition),request('PATCH',statusUrl,'admin',transition)]);assert.deepEqual(advanced.map(value=>value.status),[200,200]);assert.equal(fixture.fulfillmentHistory.length,2);
+ const tracked=await request('GET',`/api/orders/${fixture._id}`,'owner');assert.equal(tracked.status,200);assert.equal(tracked.body.order.fulfillmentStatus,'in_kitchen');assert.equal(tracked.body.order.checkoutEligible,false);
+ assert.equal((await request('GET',`/api/orders/${fixture._id}`,'other')).status,404);
+ assert.equal((await request('GET',`/api/admin/orders/${fixture._id}`,'admin')).status,200);
+ assert.equal((await request('GET','/api/orders?paymentStatus=paid','owner')).body.pagination.total,1);
+ assert.equal((await request('PATCH',statusUrl,'admin',{status:'order_received',expectedStatus:'in_kitchen'})).status,409);
+ assert.equal(fixture.paymentStatus,'paid');assert.equal(fixture.totalMinor,300);assert.equal(ingredients[1].stock,5);
 });

@@ -10,6 +10,8 @@ import PizzaBuilder from "./pages/PizzaBuilder";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import OrderSummary from "./pages/OrderSummary";
+import Orders from "./pages/Orders";
+import AdminOrder from "./pages/AdminOrder";
 
 function App() {
   return (
@@ -19,6 +21,9 @@ function App() {
       <Route path="/register" element={<Register />} />
 
       <Route path="/login" element={<Login />} />
+      <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+      <Route path="/admin/orders" element={<ProtectedRoute role="admin"><Orders admin /></ProtectedRoute>} />
+      <Route path="/admin/orders/:id" element={<ProtectedRoute role="admin"><AdminOrder /></ProtectedRoute>} />
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
 

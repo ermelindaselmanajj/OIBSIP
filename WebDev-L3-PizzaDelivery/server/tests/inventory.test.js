@@ -130,6 +130,7 @@ test('inventory routes enforce admin/user role guards including PATCH', () => {
       express:{Router:()=>Object.fromEntries(['get','post','patch'].map(method=>[method,(...args)=>routes.push([method,...args])]))},
       '../middleware/auth':{requireRole:value=>{assert.equal(value,role);return marker;}},
       '../controllers/adminController':{loginAdmin:fn,getCurrentAdmin:fn},
+      '../controllers/adminOrderController':{getAdminOrders:fn,getAdminOrder:fn,updateFulfillment:fn},
       '../controllers/inventoryController':{getInventory:fn,updateInventory:fn,getIngredients:fn},
     });
     const targets=role==='admin'?routes.filter(route=>route[1].startsWith('/inventory')):routes;

@@ -15,11 +15,12 @@ function harness({indexFails=false}={}){
  const rows=ids.map((id,i)=>({_id:id,name:`Ingredient ${i}`,category:['base','sauce','cheese','vegetable','vegetable'][i],stock:50,priceCurrency:'EUR',priceMinor:[350,50,125,50,75][i]}));
  const state={rows,orders:[],creates:0,indexCalls:0,findCalls:0};
  const quote=load('services/orderQuote.js',{'../models/Inventory':{find:async()=>{state.findCalls++;return rows;}}});
- const matches=(row,filter)=>Object.entries(filter).every(([key,value])=>String(row[key])===String(value));
+ const {matches,queryChain}=require('./orderMockHelpers');
  const Model={
   createIndexes:async()=>{state.indexCalls++;if(indexFails)throw new Error('index unavailable');},
   findOne:async filter=>state.orders.find(row=>matches(row,filter))||null,
-  find:filter=>({sort:async()=>state.orders.filter(row=>matches(row,filter))}),
+  find:filter=>queryChain(state.orders,filter),
+  countDocuments:async filter=>state.orders.filter(row=>matches(row,filter)).length,
   create:async value=>{await new Promise(resolve=>setImmediate(resolve));if(state.orders.some(row=>row.user===value.user&&row.idempotencyKey===value.idempotencyKey))throw Object.assign(new Error('duplicate'),{code:11000});state.creates++;const row={...value,_id:'99999999999999999999999'+state.creates,createdAt:new Date()};state.orders.push(row);return row;},
  };
  const api=load('controllers/orderController.js',{'../models/Order':Model,'../services/orderQuote':quote});
@@ -62,12 +63,12 @@ test('quote price addition and multiplication overflow fail instead of rounding'
 
 test('pending order snapshots save without kitchen/payment defaults; same key replays after stock/price changes',async()=>{
  const {state,invoke,validBody}=harness();const body=await validBody();const first=await invoke('createOrder',body);
- assert.equal(first.statusCode,201);assert.equal(first.body.order.status,'pending_payment');assert.equal(state.orders[0].paymentStatus,undefined);assert.equal(state.orders[0].orderStatus,undefined);assert.equal(state.indexCalls,1);
+ assert.equal(first.statusCode,201);assert.equal(first.body.order.status,'pending_payment');assert.equal(state.orders[0].paymentStatus,'pending');assert.equal(state.orders[0].orderStatus,undefined);assert.equal(state.indexCalls,1);
  state.rows.forEach(row=>{row.priceMinor=1;row.stock=0;});
  const replay=await invoke('createOrder',{...body,vegetableIds:[ids[3].toUpperCase(),ids[4]],baseId:ids[0].toUpperCase(),quoteFingerprint:'f'.repeat(64)});
  assert.equal(replay.statusCode,200);assert.equal(replay.body.order.totalMinor,first.body.order.totalMinor);assert.equal(replay.body.order.id,first.body.order.id);assert.equal(state.creates,1);
  const conflict=await invoke('createOrder',{...body,quantity:3});assert.equal(conflict.statusCode,409);assert.equal(conflict.body.code,'IDEMPOTENCY_CONFLICT');
- assert.deepEqual(Object.keys(first.body.order).sort(),['checkoutEligible','createdAt','currency','id','items','quantity','status','totalMinor','unitTotalMinor']);
+ assert.deepEqual(Object.keys(first.body.order).sort(),['checkoutEligible','confirmedAt','createdAt','currency','fulfillmentHistory','fulfillmentStatus','id','items','nextFulfillmentStatus','paymentStatus','quantity','status','totalMinor','unitTotalMinor','updatedAt']);
 });
 
 test('changed quote returns fresh snapshot without creating; bad idempotency/fingerprint rejected',async()=>{

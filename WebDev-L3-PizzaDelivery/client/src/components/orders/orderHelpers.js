@@ -1,3 +1,4 @@
+import { validateTracking } from "./tracking.js";
 import { emptySelection } from "../builder/selection.js";
 
 export function orderSelection(selection, quantity) {
@@ -52,12 +53,12 @@ export function parseQuote(value, quantity, selection, currencies = ["EUR"]) {
 
 export function parseOrder(value) {
   validateQuote(value, undefined, ["EUR", "INR"]);
-  if (typeof value.id !== "string" || !value.id || value.status !== "pending_payment" ||
+  if (typeof value.id !== "string" || !value.id || !["pending_payment", "confirmed"].includes(value.status) ||
     typeof value.createdAt !== "string" || !Number.isFinite(Date.parse(value.createdAt)) ||
-    value.checkoutEligible !== (value.currency === "EUR")) {
+    value.checkoutEligible !== (value.currency === "EUR" && value.status === "pending_payment")) {
     throw new Error("We couldn't read this order. Please retry.");
   }
-  return value;
+  return validateTracking(value);
 }
 
 export function selectionFromItems(items) {

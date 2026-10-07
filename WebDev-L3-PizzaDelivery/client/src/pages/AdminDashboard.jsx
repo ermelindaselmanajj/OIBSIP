@@ -5,6 +5,7 @@ import { adminApi } from '../services/api';
 import InventoryCard from '../components/inventory/InventoryCard';
 import { groupInventory, inventorySnapshot, replaceInventoryItem, validateInventoryItems } from '../components/inventory/helpers';
 import '../styles/inventory.css';
+import '../styles/orders.css';
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
@@ -85,7 +86,7 @@ export default function AdminDashboard() {
         <a className="inv-brand" href="#inventory-top">
           <span aria-hidden="true">PD</span> Pizza Delivery <small>ADMIN</small>
         </a>
-        <button className="inv-button" onClick={logout}>Sign out</button>
+        <div className="ot-admin-nav"><button className="inv-button" disabled={dirtyIds.size > 0 || saving > 0} title={dirtyIds.size ? "Save inventory edits before opening orders" : "Manage orders"} onClick={() => navigate("/admin/orders")}>Orders</button><button className="inv-button" onClick={logout}>Sign out</button></div>
       </header>
       <main className="inv-main" id="inventory-top">
         <div className="inv-title-row">

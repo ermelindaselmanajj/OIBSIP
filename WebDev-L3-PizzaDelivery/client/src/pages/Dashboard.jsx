@@ -56,6 +56,7 @@ function Dashboard() {
         </div>
 
         <div className="dashboard-actions">
+          <button className="builder-button" onClick={() => navigate("/orders")}>My Orders</button>
           <button
             className="builder-button"
             onClick={() => navigate("/build-pizza")}

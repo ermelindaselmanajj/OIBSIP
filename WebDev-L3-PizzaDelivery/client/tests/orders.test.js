@@ -68,7 +68,7 @@ test("draft and uncertain attempt survive reload, scope separates identities and
 });
 
 test("saved order validates pending status and edit restores IDs/quantity", () => {
-  const order = { ...quote(), id: "order-one", status: "pending_payment", checkoutEligible: true, createdAt: "2026-10-05T10:00:00.000Z" };
+  const order = { ...quote(), id: "order-one", status: "pending_payment", paymentStatus: "pending", fulfillmentStatus: null, fulfillmentHistory: [], confirmedAt: null, updatedAt: "2026-10-05T10:00:00.000Z", nextFulfillmentStatus: null, checkoutEligible: true, createdAt: "2026-10-05T10:00:00.000Z" };
   assert.equal(parseOrder(order), order);
   assert.throws(() => parseOrder({ ...order, status: "paid" }));
   assert.throws(() => parseOrder({ ...order, createdAt: "not a date" }));
@@ -76,7 +76,7 @@ test("saved order validates pending status and edit restores IDs/quantity", () =
 });
 
 test("legacy INR orders preserve snapshots but cannot become EUR quotes or checkout", () => {
-  const legacy = { ...quote(2, 1500), currency: "INR", id: "old-order", status: "pending_payment", checkoutEligible: false, createdAt: "2026-10-05T10:00:00.000Z" };
+  const legacy = { ...quote(2, 1500), currency: "INR", id: "old-order", status: "pending_payment", paymentStatus: "pending", fulfillmentStatus: null, fulfillmentHistory: [], confirmedAt: null, updatedAt: "2026-10-05T10:00:00.000Z", nextFulfillmentStatus: null, checkoutEligible: false, createdAt: "2026-10-05T10:00:00.000Z" };
   const original = JSON.stringify(legacy);
   assert.equal(parseOrder(legacy), legacy);
   assert.throws(() => parseQuote(legacy, 2));

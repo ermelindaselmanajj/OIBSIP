@@ -1,0 +1,50 @@
+.ot-page { min-height:100vh; background:#fbf6ef; color:#2c211c; padding:28px 32px 64px; font-family:system-ui,-apple-system,sans-serif; }
+.ot-shell { max-width:1120px; margin:auto; }
+.ot-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding-bottom:24px; border-bottom:1px solid #e7d6c8; }
+.ot-header > span { font-family:Georgia,serif; font-size:22px; font-weight:bold; }
+.ot-header small { font-family:system-ui,sans-serif; color:#b94d16; font-size:10px; letter-spacing:1px; }
+.ot-header a { color:#76685d; padding:10px 0; }
+.ot-title { display:flex; justify-content:space-between; gap:24px; align-items:center; margin:36px 0 28px; }
+.ot-title h1 { font-family:Georgia,serif; font-size:clamp(32px,4vw,48px); font-weight:400; margin:8px 0 12px; letter-spacing:-1px; }
+.ot-title p:last-child { color:#76685d; font-size:14px; line-height:1.7; }
+.ot-eyebrow { font-size:11px; color:#b94d16; letter-spacing:1.4px; font-weight:700; }
+.ot-button,.ot-primary { display:inline-flex; align-items:center; justify-content:center; border:1px solid #d6c3b3; border-radius:9px; min-height:44px; padding:10px 16px; background:#fffdf9; color:#2c211c; font:600 13px system-ui,sans-serif; text-decoration:none; cursor:pointer; }
+.ot-primary { background:#b94d16; border-color:#b94d16; color:white; }
+.ot-button:hover { background:#f5ebe0; text-decoration:none; }
+.ot-button:disabled,.ot-primary:disabled { background:#eee3d8; color:#66584e; cursor:not-allowed; }
+.ot-page button:focus-visible,.ot-page a:focus-visible,.ot-page select:focus-visible { outline:3px solid #b94d16; outline-offset:3px; }
+.ot-filters { display:flex; flex-wrap:wrap; align-items:end; gap:20px; background:#f5ebe0; padding:20px; border-radius:14px; margin-bottom:24px; }
+.ot-filters label { display:flex; flex-direction:column; gap:7px; font-size:12px; font-weight:650; }
+.ot-filters select { min-height:44px; padding:10px; border:1px solid #d6c3b3; border-radius:8px; font:inherit; color:#2c211c; background:white; }
+.ot-live { color:#76685d; font-size:12px; line-height:1.7; }
+.ot-live span { display:block; }
+.ot-state { background:#fffdf9; border:1px solid #e7d6c8; padding:24px; border-radius:14px; margin:20px 0; line-height:1.7; }
+.ot-state h2 { font-family:Georgia,serif; font-weight:400; margin-bottom:8px; }
+.ot-error { background:#fff0eb; border-color:#deb9a9; color:#8b3520; }
+.ot-error button { margin:12px 0; }
+.ot-order-list { display:grid; gap:16px; }
+.ot-order-card { display:flex; justify-content:space-between; gap:24px; background:#fffdf9; border:1px solid #e7d6c8; padding:24px; border-radius:16px; }
+.ot-order-card h2 { font-family:Georgia,serif; font-weight:400; margin:8px 0 12px; font-size:26px; }
+.ot-order-card p:not(.ot-eyebrow) { color:#76685d; font-size:13px; line-height:1.7; overflow-wrap:anywhere; }
+.ot-order-meta { display:flex; flex-direction:column; align-items:end; gap:10px; font-size:13px; flex-shrink:0; }
+.ot-order-meta > strong { font-size:23px; }
+.ot-badge { display:inline-block; background:#fff0db; border:1px solid #dfc299; color:#6b4b23; padding:7px 12px; border-radius:99px; font-size:12px; font-weight:650; }
+.ot-paid { background:#edf0e5; border-color:#c5d0b3; color:#52633a; }
+.ot-pagination { display:flex; justify-content:center; align-items:center; gap:18px; margin-top:28px; font-size:13px; }
+.ot-tracking { margin:28px 0; padding:24px; border:1px solid #e7d6c8; border-radius:14px; background:#fbf6ef; }
+.ot-tracking h2 { font-family:Georgia,serif; font-size:26px; font-weight:400; margin-bottom:18px; }
+.ot-tracking > p { font-size:13px; color:#76685d; margin-bottom:20px; }
+.ot-timeline { list-style:none; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; padding:0; }
+.ot-timeline li { display:flex; align-items:start; gap:10px; color:#76685d; }
+.ot-step-mark { width:30px; height:30px; flex-shrink:0; display:grid; place-items:center; border:1px solid #d6c3b3; border-radius:50%; font-size:13px; }
+.ot-timeline strong { display:block; font-size:13px; line-height:1.5; }
+.ot-timeline p { font-size:11px; line-height:1.7; margin-top:6px; }
+.ot-complete { color:#2c211c!important; }
+.ot-complete .ot-step-mark { background:#b94d16; color:white; border-color:#b94d16; }
+.ot-update-panel { padding:22px; background:#f5ebe0; border-radius:12px; line-height:1.7; font-size:13px; }
+.ot-update-panel button { margin:14px 0; }
+.ot-customer { margin:20px 0; font-size:13px; line-height:1.8; }
+.ot-customer h3 { font-size:12px; color:#76685d; }
+.ot-reference { font-size:12px; color:#76685d; overflow-wrap:anywhere; }
+.ot-admin-nav { display:flex; gap:12px; }
+@media(max-width:740px) { .ot-page { padding:18px 18px 40px; } .ot-title { flex-direction:column; align-items:start; } .ot-order-card { flex-direction:column; padding:20px; } .ot-order-meta { align-items:start; flex-wrap:wrap; } .ot-timeline { grid-template-columns:1fr; gap:24px; } .ot-tracking { padding:18px; } .ot-pagination { flex-wrap:wrap; gap:10px; } .ot-filters label { flex:1; min-width:140px; } .ot-header > span { font-size:18px; } }

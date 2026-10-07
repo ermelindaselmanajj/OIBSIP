@@ -38,6 +38,7 @@ test('HTTP inventory endpoints compose real Express routes, JWT middleware and r
   const adminRoutes = load('routes/adminRoutes.js', {
     express, '../middleware/auth': middleware, '../controllers/inventoryController': inventory,
     '../controllers/adminController': { loginAdmin() {}, getCurrentAdmin() {} },
+    '../controllers/adminOrderController': { getAdminOrders() {}, getAdminOrder() {}, updateFulfillment() {} },
   });
   const ingredientRoutes = load('routes/inventoryRoutes.js', {
     express, '../middleware/auth': middleware, '../controllers/inventoryController': inventory,
