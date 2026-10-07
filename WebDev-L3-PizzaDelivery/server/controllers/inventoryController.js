@@ -1,4 +1,5 @@
 const Inventory = require("../models/Inventory");
+const { randomUUID } = require("node:crypto");
 const { CURRENCY, isEURPrice } = require("../services/pricing");
 
 const inventoryStatus = ({ stock, threshold }) => stock === 0 ? "out-of-stock" : stock <= threshold ? "low-stock" : "available";
@@ -33,7 +34,15 @@ const updateInventory = async (req, res) => {
   try {
     const changes = {};
     for (const key of fields) changes[key] = body[key];
-    const item = await Inventory.findByIdAndUpdate(req.params.id, { $set: changes }, { new: true, runValidators: true });
+    // Values are validated above because Mongoose does not validate update
+    // pipelines. Reset the alert episode in the same atomic stock update.
+    const item = await Inventory.findByIdAndUpdate(req.params.id, [
+      { $set: changes },
+      { $set: { lowStockAlertEpisode: { $cond: [
+        { $gt: ["$stock", "$threshold"] }, null,
+        { $ifNull: ["$lowStockAlertEpisode", randomUUID()] },
+      ] } } },
+    ], { returnDocument: "after", updatePipeline: true });
     if (!item) return res.status(404).json({ message: "Inventory item not found" });
     return res.json({ message: "Inventory updated", item: inventoryItem(item) });
   } catch {

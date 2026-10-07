@@ -36,6 +36,8 @@ const inventorySchema = new mongoose.Schema(
       min: 0,
       validate: { validator: Number.isSafeInteger, message: "Threshold must be a safe integer" },
     },
+
+    lowStockAlertEpisode: { type: String, default: null },
   },
   {
     timestamps: true,

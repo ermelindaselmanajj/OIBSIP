@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { clearToken } from '../services/session';
 import { adminApi } from '../services/api';
 import InventoryCard from '../components/inventory/InventoryCard';
+import AdminEmailVerification from '../components/admin/AdminEmailVerification';
 import { groupInventory, inventorySnapshot, replaceInventoryItem, validateInventoryItems } from '../components/inventory/helpers';
 import '../styles/inventory.css';
 import '../styles/orders.css';
@@ -104,6 +105,7 @@ export default function AdminDashboard() {
             <p>{refreshNote}</p>
           </div>
         </div>
+        <AdminEmailVerification />
         <section className="inv-metrics" aria-label="Inventory overview">
           <div><p>Total ingredients</p><strong>{loaded ? snapshot.total : '—'}</strong><span>Across the kitchen</span></div>
           <div><p>Low stock</p><strong>{loaded ? snapshot.low : '—'}</strong><span>At or below threshold</span></div>

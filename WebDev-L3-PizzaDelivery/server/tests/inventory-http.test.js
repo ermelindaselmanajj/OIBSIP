@@ -26,7 +26,7 @@ test('HTTP inventory endpoints compose real Express routes, JWT middleware and r
     find: () => ({ sort: async () => [item] }),
     findByIdAndUpdate: async (id, update) => {
       assert.equal(id, itemId); writes++;
-      Object.assign(item, update.$set); return item;
+      Object.assign(item, update[0].$set); return item;
     },
   };
   const middleware = load('middleware/auth.js', {
@@ -34,10 +34,11 @@ test('HTTP inventory endpoints compose real Express routes, JWT middleware and r
     '../models/User': { findById: async id => id === userId ? { _id: userId, isVerified: true } : null },
     '../models/Admin': { findById: async id => id === adminId ? { _id: adminId } : null },
   });
-  const inventory = load('controllers/inventoryController.js', { '../models/Inventory': Model, '../services/pricing': require('../services/pricing') });
+  const inventory = load('controllers/inventoryController.js', { '../models/Inventory': Model, 'node:crypto': require('node:crypto'), '../services/pricing': require('../services/pricing') });
   const adminRoutes = load('routes/adminRoutes.js', {
     express, '../middleware/auth': middleware, '../controllers/inventoryController': inventory,
     '../controllers/adminController': { loginAdmin() {}, getCurrentAdmin() {} },
+    '../controllers/adminVerificationController': { requestEmailVerification() {}, verifyAdminEmail() {} },
     '../controllers/adminOrderController': { getAdminOrders() {}, getAdminOrder() {}, updateFulfillment() {} },
   });
   const ingredientRoutes = load('routes/inventoryRoutes.js', {

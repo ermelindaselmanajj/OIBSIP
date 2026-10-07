@@ -2,7 +2,7 @@ const Admin = require("../models/Admin");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const adminProfile = (admin) => ({ id: admin._id, email: admin.email, role: "admin" });
+const adminProfile = (admin) => ({ id: admin._id, email: admin.email, role: "admin", isVerified: admin.isVerified === true });
 
 const loginAdmin = async (req, res) => {
   try {

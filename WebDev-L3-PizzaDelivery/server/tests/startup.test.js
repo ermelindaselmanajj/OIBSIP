@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const path = require('node:path');
 
 function start(env) {
-  const state = { middleware: [], routes: [], connections: [], loadedEnv: false };
+  const state = { middleware: [], routes: [], connections: [], loadedEnv: false, schedulerStarts: 0 };
   const auth = {};
   const pizzas = {};
   const admin = {};
@@ -19,7 +19,7 @@ function start(env) {
   const express = () => app;
   express.json = () => 'json';
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../server.js'), 'utf8'), {
-    process: { env }, console: { log() {} },
+    process: { env }, console: { log() {}, error() {} },
     require(name) {
       if (name === 'express') return express;
       if (name === 'mongoose') return {
@@ -32,6 +32,7 @@ function start(env) {
       if (name === './routes/inventoryRoutes') return inventory;
       if (name === './routes/adminRoutes') return admin;
       if (name === './routes/pizzaRoutes') return pizzas;
+      if (name === './services/lowStockScheduler') return { lowStockScheduler: { start() { state.schedulerStarts++; } } };
       throw new Error(`Unexpected startup dependency: ${name}`);
     },
   });
@@ -52,6 +53,13 @@ test('server entry starts on default PORT and mounts auth/catalog without extern
 
 test('server entry respects configured PORT', () => {
   assert.equal(start({ PORT: '6000', MONGO_URI: 'mock://offline' }).state.port, 6000);
+});
+
+test('scheduler starts only after the database connection succeeds', async () => {
+  const { state } = start({ MONGO_URI: 'mock://offline' });
+  assert.equal(state.schedulerStarts, 0);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(state.schedulerStarts, 1);
 });
 
 test('npm entry and scripts target existing server and offline test files', () => {

@@ -7,6 +7,8 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test": "node --test tests/*.test.js",
+    "test:stock-alerts:integration": "node --test tests/integration/low-stock-alerts.test.js",
+    "test:admin-verification:integration": "node --test tests/integration/admin-verification.test.js",
     "create-admin": "node scripts/createAdmin.js",
     "seed-inventory": "node scripts/seedInventory.js",
     "seed-prices": "node scripts/seedPrices.js"
@@ -22,6 +24,7 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.10.2",
+    "node-cron": "^4.6.0",
     "nodemailer": "^10.0.12"
   }
 }

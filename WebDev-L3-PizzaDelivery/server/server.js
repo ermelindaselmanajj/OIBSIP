@@ -8,6 +8,7 @@ const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const inventoryRoutes = require("./routes/inventoryRoutes");
 const pizzaRoutes = require("./routes/pizzaRoutes");
+const { lowStockScheduler } = require("./services/lowStockScheduler");
 
 const app = express();
 
@@ -22,8 +23,12 @@ app.use("/api/ingredients", inventoryRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected successfully"))
-  .catch((error) => console.log("MongoDB connection error:", error));
+  .then(() => {
+    console.log("MongoDB connected successfully");
+    try { lowStockScheduler.start(); }
+    catch { console.error("Low-stock scheduler could not start. Check LOW_STOCK_CRON configuration."); }
+  })
+  .catch(() => console.error("MongoDB connection failed. Check database configuration and network access."));
 
 app.get("/", (req, res) => {
   res.send("Pizza Delivery API is running");

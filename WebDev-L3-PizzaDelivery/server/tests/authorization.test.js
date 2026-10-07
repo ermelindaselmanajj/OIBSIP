@@ -173,7 +173,8 @@ test('user login signs user subject/role and current profiles omit private field
   const current = response(); getCurrentUser({ identity: user }, current);
   assert.deepEqual(Object.keys(current.body.user).sort(), ['email', 'id', 'name', 'role']);
   const currentAdmin = response(); getCurrentAdmin({ identity: admin }, currentAdmin);
-  assert.deepEqual(Object.keys(currentAdmin.body.admin).sort(), ['email', 'id', 'role']);
+  assert.deepEqual(Object.keys(currentAdmin.body.admin).sort(), ['email', 'id', 'isVerified', 'role']);
+  assert.equal(currentAdmin.body.admin.isVerified, false);
 });
 
 test('public registration whitelists User fields and cannot grant admin or verification', async () => {
@@ -254,12 +255,13 @@ test('current-user/admin routes require the corresponding role and admin exposes
       express: { Router: () => ({ get: (...args) => routes.push(['GET', ...args]), post: (...args) => routes.push(['POST', ...args]), patch: (...args) => routes.push(['PATCH', ...args]) }) },
       '../controllers/authController': controllers,
       '../controllers/adminController': controllers,
+      '../controllers/adminVerificationController': controllers,
       '../controllers/inventoryController': controllers,
       '../controllers/adminOrderController': controllers,
       '../middleware/auth': { requireRole: requested => { assert.equal(requested, role); return marker; } },
     });
     const me = routes.find(route => route[0] === 'GET' && route[1] === '/me');
     assert.ok(me); assert.equal(me[2], marker); assert.equal(typeof me[3], 'function');
-    if (role === 'admin') assert.deepEqual(routes.map(route => route[1]).sort(), ['/inventory', '/inventory/:id', '/login', '/me', '/orders', '/orders/:id', '/orders/:id/status']);
+    if (role === 'admin') assert.deepEqual(routes.map(route => route[1]).sort(), ['/inventory', '/inventory/:id', '/login', '/me', '/orders', '/orders/:id', '/orders/:id/status', '/request-email-verification', '/verify-email/:token']);
   }
 });

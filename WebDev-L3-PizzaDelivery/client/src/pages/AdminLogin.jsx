@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { adminApi } from "../services/api";
 import { setToken } from "../services/session";
+import { verificationLinkNotice } from "../components/admin/verification";
 
 export default function AdminLogin() {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const verification = verificationLinkNotice(searchParams.get("verification"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState(location.state?.message || "");
@@ -33,6 +36,7 @@ export default function AdminLogin() {
         <div className="auth-logo">🍕</div>
         <h1>Admin Login</h1>
         <p className="auth-subtitle">Sign in with your administrator account.</p>
+        {verification && <div className={verification.success ? 'success-popup' : 'auth-message error-message'} role={verification.success ? 'status' : 'alert'}>{verification.text}</div>}
         <form className="auth-form" onSubmit={handleSubmit}>
           <input type="email" aria-label="Admin email" autoComplete="username" placeholder="Email address" value={email} onChange={(event) => setEmail(event.target.value)} required />
           <input type="password" aria-label="Admin password" autoComplete="current-password" placeholder="Password" value={password} onChange={(event) => setPassword(event.target.value)} required />

@@ -15,7 +15,7 @@ function load(file, deps) {
 }
 function res() { return { statusCode: 200, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } }; }
 const record = (stock, threshold = 20) => ({ _id: id, name: 'Italian', category: 'base', stock, threshold, updatedAt: new Date('2026-01-01') });
-function controllers(Model) { return load('controllers/inventoryController.js', { '../models/Inventory': Model, '../services/pricing': require('../services/pricing') }); }
+function controllers(Model) { return load('controllers/inventoryController.js', { '../models/Inventory': Model, 'node:crypto': require('node:crypto'), '../services/pricing': require('../services/pricing') }); }
 
 test('inventory status boundaries and user availability include zero stock without private counts', async () => {
   const rows = [record(0), record(1), record(20), record(21)];
@@ -65,9 +65,9 @@ test('PATCH validates ID and distinguishes missing item; uses whitelisted atomic
   assert.equal(args, undefined);
   const response = res(); await api.updateInventory({params:{id}, body:{stock:0, threshold:0}}, response);
   assert.equal(response.statusCode,200); assert.equal(response.body.item.status,'out-of-stock');
-  assert.equal(args[0],id); assert.deepEqual(Object.keys(args[1]), ['$set']);
-  assert.equal(args[1].$set.stock,0); assert.equal(args[1].$set.threshold,0);
-  assert.equal(args[2].new,true); assert.equal(args[2].runValidators,true);
+  assert.equal(args[0],id); assert.equal(args[1].length, 2);
+  assert.equal(args[1][0].$set.stock,0); assert.equal(args[1][0].$set.threshold,0);
+  assert.equal(args[2].returnDocument,'after'); assert.equal(args[2].updatePipeline,true);
   const missing = res(); await controllers({findByIdAndUpdate:async()=>null}).updateInventory({params:{id},body:{threshold:5}}, missing);
   assert.equal(missing.statusCode,404);
 });
@@ -130,6 +130,7 @@ test('inventory routes enforce admin/user role guards including PATCH', () => {
       express:{Router:()=>Object.fromEntries(['get','post','patch'].map(method=>[method,(...args)=>routes.push([method,...args])]))},
       '../middleware/auth':{requireRole:value=>{assert.equal(value,role);return marker;}},
       '../controllers/adminController':{loginAdmin:fn,getCurrentAdmin:fn},
+      '../controllers/adminVerificationController':{requestEmailVerification:fn,verifyAdminEmail:fn},
       '../controllers/adminOrderController':{getAdminOrders:fn,getAdminOrder:fn,updateFulfillment:fn},
       '../controllers/inventoryController':{getInventory:fn,updateInventory:fn,getIngredients:fn},
     });

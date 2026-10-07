@@ -29,7 +29,7 @@ test('HTTP orders enforce JWT roles, save authoritative pending snapshot, replay
  });
  const routes=load('routes/orderRoutes.js',{express,'../controllers/orderController':controller,'../middleware/auth':middleware});
  const adminController=load('controllers/adminOrderController.js',{'../models/Order':Model});
- const adminRoutes=load('routes/adminRoutes.js',{express,'../middleware/auth':middleware,'../controllers/adminOrderController':adminController,'../controllers/adminController':{loginAdmin(){},getCurrentAdmin(){}},'../controllers/inventoryController':{getInventory(){},updateInventory(){}}});
+ const adminRoutes=load('routes/adminRoutes.js',{express,'../middleware/auth':middleware,'../controllers/adminOrderController':adminController,'../controllers/adminController':{loginAdmin(){},getCurrentAdmin(){}},'../controllers/adminVerificationController':{requestEmailVerification(){},verifyAdminEmail(){}},'../controllers/inventoryController':{getInventory(){},updateInventory(){}}});
  const app=express();app.use(express.json());app.use('/api/orders',routes);app.use('/api/admin',adminRoutes);
  const server=http.createServer(app);await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});t.after(()=>new Promise(resolve=>server.close(resolve)));
  const tokens={owner:jwt.sign({role:'user'},secret,{algorithm:'HS256',subject:users[0],expiresIn:'1d'}),other:jwt.sign({role:'user'},secret,{algorithm:'HS256',subject:users[1],expiresIn:'1d'}),admin:jwt.sign({role:'admin'},secret,{algorithm:'HS256',subject:admin,expiresIn:'1d'})};
