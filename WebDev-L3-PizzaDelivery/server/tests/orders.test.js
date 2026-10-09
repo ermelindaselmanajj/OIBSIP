@@ -68,7 +68,7 @@ test('pending order snapshots save without kitchen/payment defaults; same key re
  const replay=await invoke('createOrder',{...body,vegetableIds:[ids[3].toUpperCase(),ids[4]],baseId:ids[0].toUpperCase(),quoteFingerprint:'f'.repeat(64)});
  assert.equal(replay.statusCode,200);assert.equal(replay.body.order.totalMinor,first.body.order.totalMinor);assert.equal(replay.body.order.id,first.body.order.id);assert.equal(state.creates,1);
  const conflict=await invoke('createOrder',{...body,quantity:3});assert.equal(conflict.statusCode,409);assert.equal(conflict.body.code,'IDEMPOTENCY_CONFLICT');
- assert.deepEqual(Object.keys(first.body.order).sort(),['checkoutEligible','confirmedAt','createdAt','currency','fulfillmentHistory','fulfillmentStatus','id','items','nextFulfillmentStatus','paymentStatus','quantity','status','totalMinor','unitTotalMinor','updatedAt']);
+ assert.deepEqual(Object.keys(first.body.order).sort(),['checkoutEligible','confirmedAt','createdAt','currency','fulfillmentHistory','fulfillmentStatus','id','items','nextFulfillmentStatus','paymentIssue','paymentStatus','quantity','status','totalMinor','unitTotalMinor','updatedAt']);
 });
 
 test('changed quote returns fresh snapshot without creating; bad idempotency/fingerprint rejected',async()=>{

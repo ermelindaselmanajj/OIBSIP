@@ -5,11 +5,12 @@ const nextStage = order => order.status === "confirmed" && order.paymentStatus =
 const iso = value => value == null ? null : new Date(value).toISOString();
 const profile = order => ({
   id: String(order._id), status: order.status, currency: order.currency,
-  checkoutEligible: order.status === "pending_payment" && order.currency === CURRENCY,
+  checkoutEligible: order.status === "pending_payment" && order.currency === CURRENCY && !order.paymentIssue && (!order.paymentStatus || order.paymentStatus === "pending"),
   quantity: order.quantity,
   items: order.items.map(item => ({ ingredientId: String(item.ingredientId), name: item.name, category: item.category, unitPriceMinor: item.unitPriceMinor, quantity: item.quantity, lineTotalMinor: item.lineTotalMinor })),
   unitTotalMinor: order.unitTotalMinor, totalMinor: order.totalMinor, createdAt: iso(order.createdAt), updatedAt: iso(order.updatedAt),
-  paymentStatus: order.paymentStatus === "paid" ? "paid" : "pending",
+  paymentStatus: ["paid", "review_required"].includes(order.paymentStatus) ? order.paymentStatus : "pending",
+  paymentIssue: order.paymentIssue || null,
   fulfillmentStatus: order.fulfillmentStatus || null,
   fulfillmentHistory: (order.fulfillmentHistory || []).map(event => ({ status: event.status, at: iso(event.at) })),
   confirmedAt: iso(order.confirmedAt), nextFulfillmentStatus: nextStage(order),
@@ -27,9 +28,10 @@ const parseList = (query = {}) => {
   if (!Number.isSafeInteger((page - 1) * limit)) throw new Error("Invalid pagination");
   const paymentStatus = query.paymentStatus === undefined ? "all" : query.paymentStatus;
   const fulfillmentStatus = query.fulfillmentStatus === undefined ? "all" : query.fulfillmentStatus;
-  if (!["all", "pending", "paid"].includes(paymentStatus) || !["all", "not_started", ...stages].includes(fulfillmentStatus)) throw new Error("Invalid order filter");
+  if (!["all", "pending", "paid", "review_required"].includes(paymentStatus) || !["all", "not_started", ...stages].includes(fulfillmentStatus)) throw new Error("Invalid order filter");
   const clauses = [supportedFilter()];
   if (paymentStatus === "paid") clauses.push({ paymentStatus: "paid" });
+  if (paymentStatus === "review_required") clauses.push({ paymentStatus: "review_required" });
   if (paymentStatus === "pending") clauses.push({ $or: [{ paymentStatus: "pending" }, { paymentStatus: { $exists: false } }, { paymentStatus: null }] });
   if (fulfillmentStatus === "not_started") clauses.push({ fulfillmentStatus: null });
   else if (fulfillmentStatus !== "all") clauses.push({ fulfillmentStatus });

@@ -9,6 +9,7 @@
     "test": "node --test tests/*.test.js",
     "test:stock-alerts:integration": "node --test tests/integration/low-stock-alerts.test.js",
     "test:admin-verification:integration": "node --test tests/integration/admin-verification.test.js",
+    "test:payments:integration": "node --test tests/integration/payments.test.js",
     "create-admin": "node scripts/createAdmin.js",
     "seed-inventory": "node scripts/seedInventory.js",
     "seed-prices": "node scripts/seedPrices.js"

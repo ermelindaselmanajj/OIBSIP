@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { adminApi } from "../services/api";
 import useOrderPolling from "../components/orders/useOrderPolling";
 import { parseOrder } from "../components/orders/orderHelpers";
-import { nextAction, stageLabels } from "../components/orders/tracking";
+import { nextAction, paymentLabel, stageLabels } from "../components/orders/tracking";
 import FulfillmentTimeline from "../components/orders/FulfillmentTimeline";
 import PriceBreakdown from "../components/orders/PriceBreakdown";
 import "../styles/builder.css";
@@ -56,7 +56,9 @@ export default function AdminOrder() {
         {result.error && <div className="ot-state ot-error" role="alert"><p>{result.error}</p><button className="ot-button" onClick={result.refresh}>Retry</button></div>}
         {order && (
           <section className="pb-main">
-          <div className="pb-order-heading"><h2>Order {order.id.slice(-8)}</h2><span className="ot-badge">{order.paymentStatus === "paid" ? (order.status === "confirmed" ? "Paid · Confirmed" : "Paid · Awaiting confirmation") : "Payment pending"}</span></div>
+          <div className="pb-order-heading"><h2>Order {order.id.slice(-8)}</h2><span className="ot-badge">{order.paymentStatus === "paid" ? (order.status === "confirmed" ? "Paid · Confirmed" : "Paid · Awaiting confirmation") : paymentLabel(order)}</span></div>
+          {order.paymentStatus === "review_required" && <p className="pb-notice">A captured payment needs review. Fulfillment is blocked; payment status cannot be changed from this screen.</p>}
+          {order.paymentIssue && order.paymentStatus !== "review_required" && <p className="pb-notice">Checkout or payment confirmation needs a status check before this order can progress.</p>}
           {order.customer && <div className="ot-customer"><h3>Customer</h3><p>{order.customer.name}</p><p>{order.customer.email}</p></div>}
           <p className="ot-reference">Reference: {order.id}</p>
           <FulfillmentTimeline order={order} />

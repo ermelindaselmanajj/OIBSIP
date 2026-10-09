@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import api, { adminApi } from "../services/api";
 import useOrderPolling from "../components/orders/useOrderPolling";
 import { parseOrder, formatMoney } from "../components/orders/orderHelpers";
-import { parseOrderList, stageLabels } from "../components/orders/tracking";
+import { parseOrderList, paymentLabel, stageLabels } from "../components/orders/tracking";
 import "../styles/orders.css";
 
 const parseList = (data) => parseOrderList(data, parseOrder);
@@ -38,6 +38,7 @@ export default function Orders({ admin = false }) {
               <option value="all">All payments</option>
               <option value="pending">Pending</option>
               <option value="paid">Paid</option>
+              <option value="review_required">Needs review</option>
             </select>
           </label>
           <label>
@@ -81,7 +82,7 @@ export default function Orders({ admin = false }) {
               <div className="ot-order-meta">
                 <strong>{formatMoney(order.totalMinor, order.currency)}</strong>
                 <span className={`ot-badge ${order.paymentStatus === "paid" ? "ot-paid" : ""}`}>
-                  {order.paymentStatus === "paid" ? "Paid" : "Payment pending"}
+                  {paymentLabel(order)}
                 </span>
                 <span>{stageLabels[order.fulfillmentStatus] || "Not started"}</span>
                 <Link className="ot-button" to={`${admin ? "/admin/orders" : "/orders"}/${order.id}`}>

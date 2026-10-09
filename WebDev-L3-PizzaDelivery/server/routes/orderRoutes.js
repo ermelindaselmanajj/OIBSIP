@@ -1,8 +1,13 @@
 const express = require("express");
 const { requireRole } = require("../middleware/auth");
 const { quoteOrder, createOrder, getOrder, getOrders } = require("../controllers/orderController");
+const { getPaymentConfig, createPayment, confirmPayment, reconcilePayment } = require("../controllers/paymentController");
 const router = express.Router();
 router.use(requireRole("user"));
+router.get("/payment-config", getPaymentConfig);
+router.post("/:id/payment", createPayment);
+router.post("/:id/payment/confirm", confirmPayment);
+router.post("/:id/payment/reconcile", reconcilePayment);
 router.post("/quote", quoteOrder);
 router.post("/", createOrder);
 router.get("/", getOrders);

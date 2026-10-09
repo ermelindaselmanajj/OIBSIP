@@ -4,6 +4,8 @@ import PriceBreakdown from "../components/orders/PriceBreakdown";
 import { parseOrder, selectionFromItems } from "../components/orders/orderHelpers";
 import useOrderPolling from "../components/orders/useOrderPolling";
 import FulfillmentTimeline from "../components/orders/FulfillmentTimeline";
+import PaymentCheckout from "../components/orders/PaymentCheckout";
+import { paymentLabel } from "../components/orders/tracking";
 import "../styles/builder.css";
 import "../styles/orders.css";
 
@@ -44,7 +46,7 @@ export default function OrderSummary() {
                 <p className="pb-eyebrow">ORDER SUMMARY</p>
                 <h2>Your custom pizza</h2>
               </div>
-              <span className="pb-payment-badge">{current.order.paymentStatus === "paid" ? "Payment confirmed" : "Payment pending"}</span>
+              <span className="pb-payment-badge">{paymentLabel(current.order)}</span>
             </div>
             {current.order.currency === "INR" && (
               <p className="pb-notice" role="status">
@@ -58,9 +60,10 @@ export default function OrderSummary() {
             <FulfillmentTimeline order={current.order} />
             <p className="ot-live">Updates every 5 seconds while this tab is visible.</p>
             <PriceBreakdown quote={current.order} heading="Saved ingredient prices" />
-            <p className="pb-summary-note">{current.order.paymentStatus === "paid" ? "Your payment is confirmed. The stages above show your delivery progress." : "No payment has been collected. Editing makes a new selection for review; this saved order stays unchanged."}</p>
+            <PaymentCheckout key={current.order.id} order={current.order} onOrder={(order) => result.replace({ order })} />
+            <p className="pb-summary-note">{current.order.paymentStatus === "paid" ? "Your payment is confirmed. The stages above show your delivery progress." : current.order.paymentStatus === "review_required" || current.order.paymentIssue ? "Payment needs a status check before any new checkout. Your saved order stays unchanged." : "Editing makes a new selection for review; this saved order stays unchanged. Check payment status if a previous checkout was interrupted."}</p>
             <div className="pb-navigation">
-              {current.order.paymentStatus === "pending" && <button className="pb-secondary" onClick={edit}>{current.order.currency === "EUR" ? "Edit these choices" : "Rebuild with EUR prices"}</button>}
+              {current.order.paymentStatus === "pending" && !current.order.paymentIssue && <button className="pb-secondary" onClick={edit}>{current.order.currency === "EUR" ? "Edit these choices" : "Rebuild with EUR prices"}</button>}
               <Link className="pb-primary pb-button-link" to="/dashboard">Back to menu</Link>
             </div>
           </section>

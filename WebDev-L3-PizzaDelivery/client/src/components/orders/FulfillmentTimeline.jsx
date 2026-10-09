@@ -6,7 +6,7 @@ export default function FulfillmentTimeline({ order }) {
       <h2>Your pizza's journey</h2>
       {order.confirmedAt && <p>Order confirmed {new Date(order.confirmedAt).toLocaleString()}.</p>}
       {order.paymentStatus === "paid" && order.status !== "confirmed" && <p>Payment received. Awaiting order confirmation.</p>}
-      {order.paymentStatus !== "paid" && <p>Tracking starts after payment is confirmed.</p>}
+      {order.paymentStatus === "review_required" ? <p>Payment needs review. Delivery tracking starts when payment and stock are confirmed.</p> : order.paymentStatus !== "paid" && <p>Tracking starts after payment is confirmed.</p>}
       <ol className="ot-timeline">
         {fulfillmentStages.map((status, index) => {
           const event = order.fulfillmentHistory.find((item) => item.status === status);

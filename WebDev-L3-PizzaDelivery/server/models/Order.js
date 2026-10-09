@@ -25,6 +25,14 @@ const orderSchema = new mongoose.Schema({
     at: { type: Date, required: true },
   }, { _id: false })], default: undefined },
   confirmedAt: Date,
+  providerOrderId: String,
+  providerPaymentId: String,
+  providerKeyId: String,
+  paymentCreationToken: String,
+  paymentCreationStartedAt: Date,
+  paymentIssue: String,
+  capturedPaymentObservedAt: Date,
+  stockDeductedAt: Date,
 }, { timestamps: true });
 orderSchema.pre("validate", function () {
   if (["pending_payment", "confirmed"].includes(this.status)) {
@@ -40,4 +48,6 @@ orderSchema.pre("validate", function () {
   }
 });
 orderSchema.index({ user: 1, idempotencyKey: 1 }, { unique: true, partialFilterExpression: { idempotencyKey: { $type: "string" } } });
+orderSchema.index({ providerOrderId: 1 }, { unique: true, partialFilterExpression: { providerOrderId: { $type: "string" } } });
+orderSchema.index({ providerPaymentId: 1 }, { unique: true, partialFilterExpression: { providerPaymentId: { $type: "string" } } });
 module.exports = mongoose.model("Order", orderSchema);
