@@ -13,6 +13,14 @@ function harness({ user = null, mailFails = false, env = {}, createFails = false
   attach(user);
   const User = {
     findOne: async (query) => { state.queries.push(query); return state.user; },
+    updateOne: async (query, changes) => {
+      state.queries.push(query);
+      if (!state.user || state.user.resetPasswordToken !== query.resetPasswordToken ||
+        !(state.user.resetPasswordExpires > query.resetPasswordExpires.$gt)) return { modifiedCount: 0 };
+      Object.assign(state.user, changes.$set);
+      for (const field of Object.keys(changes.$unset)) delete state.user[field];
+      return { modifiedCount: 1 };
+    },
     create: async (value) => {
       state.creates++;
       if (createFails) throw new Error('DB unavailable');
@@ -35,6 +43,7 @@ function harness({ user = null, mailFails = false, env = {}, createFails = false
       };
       if (name === 'jsonwebtoken') return { sign: () => 'jwt' };
       if (name === 'crypto') return require('node:crypto');
+      if (name === 'node:buffer') return require('node:buffer');
       if (name === '../config/urls') return urlsModule.exports;
       if (name === '../utils/sendEmail') return async (mail) => {
         state.mails.push(mail);
@@ -136,13 +145,44 @@ test('successful reset email saves matching token and 15-minute expiry', async (
 });
 
 test('reset consumes token and hashes new password; expiry included in query', async () => {
-  const { state, invoke } = harness({ user: { password: 'hashed:old', resetPasswordToken: 'valid' } });
+  const { state, invoke } = harness({ user: { password: 'hashed:old', resetPasswordToken: 'valid', resetPasswordExpires: Date.now() + 100000 } });
   assert.equal((await invoke('resetPassword', { password: 'new' }, { token: 'valid' })).statusCode, 200);
   assert.equal(state.user.password, 'hashed:new');
   assert.equal(state.user.resetPasswordToken, undefined);
   assert.equal(state.user.resetPasswordExpires, undefined);
   assert.equal(state.queries[0].resetPasswordToken, 'valid');
   assert.ok(state.queries[0].resetPasswordExpires.$gt > 0);
+});
+
+test('malformed emails and non-string or truncated passwords are rejected before database or SMTP work', async () => {
+  for (const email of [undefined, '', 'invalid', { $ne: null }, 'a@example.test,b@example.test']) {
+    const { state, invoke } = harness();
+    assert.equal((await invoke('forgotPassword', { email })).statusCode, 400);
+    assert.equal((await invoke('registerUser', { ...registration, email })).statusCode, 400);
+    assert.equal(state.queries.length, 0);
+    assert.equal(state.mails.length, 0);
+  }
+  for (const password of [123, [], {}, '', 'a'.repeat(73), 'é'.repeat(37)]) {
+    const { state, invoke } = harness();
+    assert.equal((await invoke('resetPassword', { password }, { token: 'valid' })).statusCode, 400);
+    assert.equal((await invoke('registerUser', { ...registration, password })).statusCode, 400);
+    assert.equal(state.hashes, 0);
+    assert.equal(state.creates, 0);
+  }
+});
+
+test('expired and simultaneously reused reset links cannot overwrite a password twice', async () => {
+  const { state, invoke } = harness({ user: { password: 'hashed:old', resetPasswordToken: 'valid', resetPasswordExpires: Date.now() + 100000 } });
+  const results = await Promise.all([
+    invoke('resetPassword', { password: 'first' }, { token: 'valid' }),
+    invoke('resetPassword', { password: 'second' }, { token: 'valid' }),
+  ]);
+  assert.deepEqual(results.map(result => result.statusCode).sort(), [200, 400]);
+  assert.equal(state.user.password, 'hashed:first');
+  assert.equal((await invoke('resetPassword', { password: 'again' }, { token: 'valid' })).statusCode, 400);
+  const expired = harness({ user: { password: 'hashed:old', resetPasswordToken: 'old', resetPasswordExpires: Date.now() - 1 } });
+  assert.equal((await expired.invoke('resetPassword', { password: 'new' }, { token: 'old' })).statusCode, 400);
+  assert.equal(expired.state.user.password, 'hashed:old');
 });
 
 test('URL defaults and configurable PORT remain consistent', () => {

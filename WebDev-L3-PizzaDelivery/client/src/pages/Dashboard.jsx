@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { parseMenu } from "../services/menu";
 import { clearToken } from "../services/session";
 
 function Dashboard() {
@@ -17,10 +18,7 @@ function Dashboard() {
       try {
         const response = await api.get("/pizzas", { signal: controller.signal });
         if (controller.signal.aborted) return;
-        if (!Array.isArray(response.data)) {
-          throw new Error("Invalid pizza menu response");
-        }
-        setPizzas(response.data);
+        setPizzas(parseMenu(response.data));
       } catch (error) {
         if (controller.signal.aborted) return;
         setErrorMessage(

@@ -16,7 +16,7 @@ function load(file, dependencies, env = { JWT_SECRET: secret }) {
     module, process: { env }, console: { error() {} },
     require(name) {
       if (Object.hasOwn(dependencies, name)) return dependencies[name];
-      if (['jsonwebtoken', 'bcryptjs', 'crypto'].includes(name)) return require(name);
+      if (['jsonwebtoken', 'bcryptjs', 'crypto', 'node:buffer'].includes(name)) return require(name);
       throw new Error(`Unexpected dependency ${name}`);
     },
   });

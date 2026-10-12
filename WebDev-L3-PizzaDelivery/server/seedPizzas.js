@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-require("dotenv").config();
+const path = require("node:path");
 
 const Pizza = require("./models/Pizza");
 
@@ -48,21 +48,32 @@ const pizzas = [
   },
 ];
 
-const seedPizzas = async () => {
+const seedPizzas = async ({ mongoose: db = mongoose, Pizza: Model = Pizza } = {}) => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await db.connect(process.env.MONGO_URI);
+    for (const pizza of pizzas) {
+      await Model.updateOne({ name: pizza.name }, { $setOnInsert: pizza }, {
+        upsert: true, runValidators: true, timestamps: false,
+      });
+    }
+  } finally { await db.disconnect(); }
+};
 
-    await Pizza.deleteMany();
-
-    await Pizza.insertMany(pizzas);
-
-    console.log("Pizzas added successfully");
-
-    process.exit();
-  } catch (error) {
-    console.error(error);
-    process.exit(1);
+const main = async () => {
+  require("dotenv").config({ path: path.resolve(__dirname, ".env"), quiet: true });
+  if (!process.env.MONGO_URI) {
+    console.error("MONGO_URI must be configured before seeding the menu.");
+    process.exitCode = 1;
+    return;
+  }
+  try {
+    await seedPizzas();
+    console.log("Demo menu seeded; existing pizzas, prices and photos were preserved.");
+  } catch {
+    console.error("Menu seed failed. Check database configuration privately. Existing pizzas are never deleted or overwritten.");
+    process.exitCode = 1;
   }
 };
 
-seedPizzas();
+if (require.main === module) main();
+module.exports = { seedPizzas, pizzas };

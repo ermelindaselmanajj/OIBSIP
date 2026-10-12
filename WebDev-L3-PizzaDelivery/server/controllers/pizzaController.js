@@ -5,10 +5,9 @@ const getPizzas = async (req, res) => {
     const pizzas = await Pizza.find();
 
     res.status(200).json(pizzas);
-  } catch (error) {
+  } catch {
     res.status(500).json({
       message: "Failed to fetch pizzas",
-      error: error.message,
     });
   }
 };
