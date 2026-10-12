@@ -1,6 +1,6 @@
-const { createPaymentService } = require("../services/payments");
+const { createStripePaymentService } = require("../services/stripePayments");
 
-function createPaymentController(service = createPaymentService()) {
+function createPaymentController(service = createStripePaymentService()) {
   const run = handler => async (req, res) => {
     try { return res.json(await handler(req)); }
     catch (cause) {
@@ -19,6 +19,7 @@ function createPaymentController(service = createPaymentService()) {
     createPayment: run(req => { emptyBody(req); return service.initiate(req.params.id, req.identity._id); }),
     confirmPayment: run(req => service.confirm(req.params.id, req.identity._id, req.body)),
     reconcilePayment: run(req => { emptyBody(req); return service.reconcile(req.params.id, req.identity._id); }),
+    stripeWebhook: run(req => service.webhook(req.body, req.get("stripe-signature"))),
   };
 }
 

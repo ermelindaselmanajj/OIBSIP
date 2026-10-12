@@ -139,7 +139,7 @@ test("authorized payments block retries across restart; definitive failure permi
   await assert.rejects(f.service.reconcile(f.id, user), { code: "PAYMENT_PROCESSING" }); assert.equal(f.state.orders[0].paymentIssue, "PAYMENT_PROCESSING");
   await assert.rejects(createPaymentService(f.dependencies).initiate(f.id, user), { code: "PAYMENT_PROCESSING" });
   f.provider.listPayments = async () => ({ count: 1, items: [{ ...f.payment, status: "failed", captured: false }] });
-  assert.equal((await f.service.reconcile(f.id, user)).order.checkoutEligible, true);
+  assert.equal((await f.service.reconcile(f.id, user)).order.checkoutEligible, false);
 });
 
 test("malformed provider lists, key rotation, multiple captures and zero/corrupt snapshots never charge", async () => {

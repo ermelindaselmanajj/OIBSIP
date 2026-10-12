@@ -9,10 +9,13 @@ const adminRoutes = require("./routes/adminRoutes");
 const inventoryRoutes = require("./routes/inventoryRoutes");
 const pizzaRoutes = require("./routes/pizzaRoutes");
 const { lowStockScheduler } = require("./services/lowStockScheduler");
+const { stripeWebhook } = require("./controllers/paymentController");
 
 const app = express();
 
 app.use(cors());
+// Stripe signs the original bytes. This route must precede express.json().
+app.post("/api/payments/stripe/webhook", express.raw({ type: "application/json", limit: "100kb" }), stripeWebhook);
 app.use(express.json());
 
 app.use("/api/orders", orderRoutes);

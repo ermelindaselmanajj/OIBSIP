@@ -3,9 +3,11 @@ const stages = ["order_received", "in_kitchen", "sent_to_delivery"];
 const supportedFilter = () => ({ status: { $in: ["pending_payment", "confirmed"] }, currency: { $in: ["EUR", "INR"] }, "items.0": { $exists: true } });
 const nextStage = order => order.status === "confirmed" && order.paymentStatus === "paid" && stages.includes(order.fulfillmentStatus) ? stages[stages.indexOf(order.fulfillmentStatus) + 1] || null : null;
 const iso = value => value == null ? null : new Date(value).toISOString();
+const paymentProvider = order => order.paymentProvider || (order.providerOrderId || order.providerKeyId || order.providerPaymentId ? "razorpay" : null);
 const profile = order => ({
   id: String(order._id), status: order.status, currency: order.currency,
-  checkoutEligible: order.status === "pending_payment" && order.currency === CURRENCY && !order.paymentIssue && (!order.paymentStatus || order.paymentStatus === "pending"),
+  paymentProvider: paymentProvider(order),
+  checkoutEligible: paymentProvider(order) !== "razorpay" && order.status === "pending_payment" && order.currency === CURRENCY && !order.paymentIssue && (!order.paymentStatus || order.paymentStatus === "pending"),
   quantity: order.quantity,
   items: order.items.map(item => ({ ingredientId: String(item.ingredientId), name: item.name, category: item.category, unitPriceMinor: item.unitPriceMinor, quantity: item.quantity, lineTotalMinor: item.lineTotalMinor })),
   unitTotalMinor: order.unitTotalMinor, totalMinor: order.totalMinor, createdAt: iso(order.createdAt), updatedAt: iso(order.updatedAt),
@@ -38,4 +40,4 @@ const parseList = (query = {}) => {
   return { page, limit, filter: { $and: clauses } };
 };
 const isSupported = order => order && ["pending_payment", "confirmed"].includes(order.status) && ["EUR", "INR"].includes(order.currency) && Array.isArray(order.items) && order.items.length > 0;
-module.exports = { profile, stages, nextStage, parseList, supportedFilter, isSupported };
+module.exports = { profile, stages, nextStage, parseList, supportedFilter, isSupported, paymentProvider };

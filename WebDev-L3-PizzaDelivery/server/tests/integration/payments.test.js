@@ -163,7 +163,7 @@ test("payments with isolated MongoDB transactions and simulated Razorpay", { tim
     const saved = await Order.findById(order._id); const paymentId = saved.providerOrderId;
     assert.equal((await request(endpoint(""))).body.checkout.providerOrderId, paymentId); assert.equal(providerCreates, 1);
     captured("pay_failed", paymentId, { status: "failed", captured: false }); service = createPaymentService(dependencies);
-    assert.equal((await request(endpoint("/reconcile"))).body.order.checkoutEligible, true); assert.equal((await request(endpoint(""))).body.checkout.providerOrderId, paymentId); assert.equal(providerCreates, 1);
+    assert.equal((await request(endpoint("/reconcile"))).body.order.checkoutEligible, false); assert.equal((await request(endpoint(""))).body.checkout.providerOrderId, paymentId); assert.equal(providerCreates, 1);
   });
   await t.test("stored authorized state blocks repeat checkout until capture and preserves prices/thresholds", async () => {
     await reset(); const before = await Inventory.find().select("name category threshold priceMinor priceCurrency").lean();

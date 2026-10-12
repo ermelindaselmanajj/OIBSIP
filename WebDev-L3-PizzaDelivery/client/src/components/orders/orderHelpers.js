@@ -56,7 +56,8 @@ export function parseOrder(value) {
   if (typeof value.id !== "string" || !value.id || !["pending_payment", "confirmed"].includes(value.status) ||
     typeof value.createdAt !== "string" || !Number.isFinite(Date.parse(value.createdAt)) ||
     !(value.paymentIssue === undefined || value.paymentIssue === null || (typeof value.paymentIssue === "string" && value.paymentIssue.length > 0)) ||
-    value.checkoutEligible !== (value.currency === "EUR" && value.status === "pending_payment" && value.paymentStatus === "pending" && !value.paymentIssue)) {
+    ![undefined, null, "stripe", "razorpay"].includes(value.paymentProvider) ||
+    value.checkoutEligible !== (value.paymentProvider !== "razorpay" && value.currency === "EUR" && value.status === "pending_payment" && value.paymentStatus === "pending" && !value.paymentIssue)) {
     throw new Error("We couldn't read this order. Please retry.");
   }
   return validateTracking(value);

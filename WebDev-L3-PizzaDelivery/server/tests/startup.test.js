@@ -5,19 +5,21 @@ const vm = require('node:vm');
 const path = require('node:path');
 
 function start(env) {
-  const state = { middleware: [], routes: [], connections: [], loadedEnv: false, schedulerStarts: 0 };
+  const state = { middleware: [], routes: [], posts: [], mountOrder: [], connections: [], loadedEnv: false, schedulerStarts: 0 };
   const auth = {};
   const pizzas = {};
   const admin = {};
   const inventory = {};
   const orders = {};
   const app = {
-    use(...args) { state.middleware.push(args); },
+    use(...args) { state.middleware.push(args); state.mountOrder.push(args[0]); },
+    post(...args) { state.posts.push(args); state.mountOrder.push(args[0]); },
     get(...args) { state.routes.push(args); },
     listen(port, callback) { state.port = port; callback(); },
   };
   const express = () => app;
   express.json = () => 'json';
+  express.raw = options => { assert.equal(options.type, 'application/json'); return 'raw'; };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../server.js'), 'utf8'), {
     process: { env }, console: { log() {}, error() {} },
     require(name) {
@@ -32,6 +34,7 @@ function start(env) {
       if (name === './routes/inventoryRoutes') return inventory;
       if (name === './routes/adminRoutes') return admin;
       if (name === './routes/pizzaRoutes') return pizzas;
+      if (name === './controllers/paymentController') return { stripeWebhook: 'stripe-webhook' };
       if (name === './services/lowStockScheduler') return { lowStockScheduler: { start() { state.schedulerStarts++; } } };
       throw new Error(`Unexpected startup dependency: ${name}`);
     },
@@ -46,6 +49,8 @@ test('server entry starts on default PORT and mounts auth/catalog without extern
   assert.deepEqual(state.connections, ['mock://offline']);
   assert.deepEqual(state.middleware, [['cors'], ['json'], ['/api/orders', orders], ['/api/auth', auth], ['/api/admin', admin], ['/api/pizzas', pizzas], ['/api/ingredients', inventory]]);
   assert.deepEqual(state.routes.map(([route]) => route), ['/', '/test']);
+  assert.deepEqual(state.posts, [['/api/payments/stripe/webhook', 'raw', 'stripe-webhook']]);
+  assert.ok(state.mountOrder.indexOf('/api/payments/stripe/webhook') < state.mountOrder.indexOf('json'));
   let message;
   state.routes[0][1]({}, { send(value) { message = value; } });
   assert.equal(message, 'Pizza Delivery API is running');

@@ -118,7 +118,7 @@ function createPaymentService({ orders = Order, inventory = Inventory, provider 
     }
     // Persist observed capture before the transaction so a failed database commit
     // can never lead the UI to offer a second charge.
-    const observed = await orders.findOneAndUpdate({ _id: order._id, user: order.user, status: "pending_payment", providerOrderId: order.providerOrderId,
+    const observed = await orders.findOneAndUpdate({ _id: order._id, user: order.user, status: "pending_payment", paymentProvider: order.paymentProvider || null, providerOrderId: order.providerOrderId,
       $or: [{ providerPaymentId: null }, { providerPaymentId: payment.id }] }, {
       $set: { providerPaymentId: payment.id, paymentStatus: "review_required", paymentIssue: "PAYMENT_CONFIRMATION_PENDING", capturedPaymentObservedAt: now() },
     }, { returnDocument: "after", runValidators: true });
@@ -133,14 +133,14 @@ function createPaymentService({ orders = Order, inventory = Inventory, provider 
       await session.withTransaction(async () => {
         const current = await owned(String(order._id), order.user, session);
         if (current.status === "confirmed" && current.providerPaymentId === payment.id) return;
-        if (current.status !== "pending_payment" || current.providerPaymentId !== payment.id || current.stockDeductedAt) throw paymentError(409, "PAYMENT_CONFLICT", "The order changed during payment confirmation.");
+        if (current.status !== "pending_payment" || current.paymentProvider !== order.paymentProvider || current.providerOrderId !== order.providerOrderId || current.providerPaymentId !== payment.id || current.stockDeductedAt) throw paymentError(409, "PAYMENT_CONFLICT", "The order changed during payment confirmation.");
         snapshot(current);
         for (const item of current.items) {
           const result = await inventory.updateOne({ _id: item.ingredientId, category: item.category, stock: { $gte: item.quantity } }, { $inc: { stock: -item.quantity } }, { session, runValidators: true });
           if (result.modifiedCount !== 1) throw paymentError(409, "INSUFFICIENT_STOCK", "Payment was captured, but some ingredients are unavailable. Contact the administrator; do not pay again.");
         }
         const at = now();
-        const result = await orders.updateOne({ _id: current._id, status: "pending_payment", providerPaymentId: payment.id, stockDeductedAt: null }, {
+        const result = await orders.updateOne({ _id: current._id, status: "pending_payment", paymentProvider: current.paymentProvider || null, providerOrderId: current.providerOrderId, providerPaymentId: payment.id, stockDeductedAt: null }, {
           $set: { status: "confirmed", paymentStatus: "paid", confirmedAt: at, stockDeductedAt: at, fulfillmentStatus: "order_received", fulfillmentHistory: [{ status: "order_received", at }] },
           $unset: { paymentIssue: 1 },
         }, { session, runValidators: true });
@@ -148,7 +148,7 @@ function createPaymentService({ orders = Order, inventory = Inventory, provider 
       }, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
     } catch (cause) {
       const issue = cause.code === "INSUFFICIENT_STOCK" ? "INSUFFICIENT_STOCK" : "PAYMENT_CONFIRMATION_PENDING";
-      await orders.updateOne({ _id: order._id, status: "pending_payment", providerPaymentId: payment.id }, { $set: { paymentStatus: "review_required", paymentIssue: issue } });
+      await orders.updateOne({ _id: order._id, status: "pending_payment", paymentProvider: order.paymentProvider || null, providerOrderId: order.providerOrderId, providerPaymentId: payment.id }, { $set: { paymentStatus: "review_required", paymentIssue: issue } });
       throw paymentError(cause.status || 503, issue, cause.code === "INSUFFICIENT_STOCK" ? cause.message : "Payment was captured but confirmation needs a retry. Check payment status; do not pay again.", { order: profile(await owned(String(order._id), order.user)) });
     } finally { if (session) await session.endSession(); }
     return { order: profile(await owned(String(order._id), order.user)) };
@@ -192,7 +192,9 @@ function createPaymentService({ orders = Order, inventory = Inventory, provider 
     if (order.paymentIssue === "PAYMENT_PROCESSING") order = await orders.findOneAndUpdate({ _id: id, user, status: "pending_payment", providerPaymentId: null, paymentIssue: "PAYMENT_PROCESSING" }, { $unset: { paymentIssue: 1 } }, { returnDocument: "after" }) || await owned(id, user);
     return { order: profile(order) };
   }
-  return { config, initiate, confirm, reconcile };
+  // Both providers use this transaction: capture observation survives a rollback,
+  // while stock, confirmation and fulfillment are committed together once.
+  return { config, initiate, confirm, reconcile, owned, snapshot, checkStock, settle };
 }
 
 module.exports = { createPaymentService, supportsTransactions };
