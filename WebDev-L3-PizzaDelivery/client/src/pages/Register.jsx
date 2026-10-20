@@ -1,3 +1,4 @@
+import AuthLayout from "../components/AuthLayout";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
@@ -49,9 +50,9 @@ function Register() {
   };
 
   return (
-    <div className="auth-page">
+    <AuthLayout>
       <div className="auth-card">
-        <div className="auth-logo">🍕</div>
+        <div className="auth-logo" aria-hidden="true">PD</div>
 
         <h1>Create Account</h1>
 
@@ -63,7 +64,7 @@ function Register() {
           <input
             type="text"
             name="name"
-            placeholder="Full name"
+            aria-label="Full name" autoComplete="name" placeholder="Full name"
             value={formData.name}
             onChange={handleChange}
             required
@@ -72,7 +73,7 @@ function Register() {
           <input
             type="email"
             name="email"
-            placeholder="Email address"
+            aria-label="Email address" autoComplete="email" placeholder="Email address"
             value={formData.email}
             onChange={handleChange}
             required
@@ -81,7 +82,7 @@ function Register() {
           <input
             type="password"
             name="password"
-            placeholder="Password"
+            aria-label="Password" autoComplete="new-password" placeholder="Password"
             value={formData.password}
             onChange={handleChange}
             required
@@ -126,7 +127,7 @@ function Register() {
           </p>
         </div>
       </div>
-    </div>
+    </AuthLayout>
   );
 }
 

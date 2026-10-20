@@ -1,3 +1,4 @@
+import hero from "../assets/pizza-builder/bases/italian.jpg";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
@@ -49,12 +50,12 @@ function Dashboard() {
     <div className="dashboard-page">
       <header className="dashboard-header">
         <div>
-          <h2>🍕 Pizza Delivery</h2>
+          <h2 className="brand-lockup"><span className="brand-mark" aria-hidden="true">PD</span> Pizza Delivery</h2>
           <span className="dashboard-tagline">Fresh pizza, your way.</span>
         </div>
 
-        <div className="dashboard-actions">
-          <button className="builder-button" onClick={() => navigate("/orders")}>My Orders</button>
+        <nav className="dashboard-actions" aria-label="Your account">
+          <button className="menu-orders-button" onClick={() => navigate("/orders")}>My Orders</button>
           <button
             className="builder-button"
             onClick={() => navigate("/build-pizza")}
@@ -65,18 +66,18 @@ function Dashboard() {
           <button className="logout-button" onClick={handleLogout}>
             Logout
           </button>
-        </div>
+        </nav>
       </header>
 
       <main className="dashboard-content">
         <section className="hero-section">
           <div>
-            <p className="hero-small">WELCOME TO PIZZA DELIVERY</p>
+            <p className="hero-small">FRESH IDEAS. FAVORITE FLAVORS.</p>
 
             <h1>
-              Delicious pizza,
+              Your pizza.
               <br />
-              made for you.
+              Your way.
             </h1>
 
             <p>
@@ -88,17 +89,16 @@ function Dashboard() {
               className="hero-button"
               onClick={() => navigate("/build-pizza")}
             >
-              Create Your Pizza →
+              Build Your Pizza →
             </button>
           </div>
 
-          <div className="hero-pizza">🍕</div>
+          <div className="hero-visual"><div className="hero-orbit" aria-hidden="true" /><img src={hero} alt="Freshly baked pizza with colorful toppings" className="hero-pizza" /></div>
         </section>
 
         <section className="pizza-section">
           <div className="section-heading">
-            <p className="section-small">OUR MENU</p>
-            <h2>Popular Pizzas</h2>
+            <div><h2>Find your next favorite.</h2><p>The classics you love. A combination for every craving.</p></div><a href="#make-it-yours" className="menu-text-link">Feeling creative? →</a>
           </div>
 
           {loading ? (
@@ -117,11 +117,11 @@ function Dashboard() {
           ) : (
             <div className="pizza-grid">
               {pizzas.map((pizza) => (
-                <div className="pizza-card" key={pizza._id}>
+                <article className="pizza-card" key={pizza._id}>
                   <img
                     src={pizza.image}
                     alt={pizza.name}
-                    className="pizza-image"
+                    className="pizza-image" loading="lazy" width="600" height="400"
                   />
 
                   <div className="pizza-card-content">
@@ -139,11 +139,16 @@ function Dashboard() {
                       </button>
                     </div>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           )}
         </section>
+        <section className="menu-close" id="make-it-yours">
+          <div><h2>Good taste is personal.</h2><p>Choose your base, sauce, cheese, and finishing touches.</p></div>
+          <button className="hero-button" onClick={() => navigate("/build-pizza")}>Build Your Pizza →</button>
+        </section>
+        <footer className="menu-footer"><span>Pizza Delivery</span><span>Fresh pizza, your way.</span></footer>
       </main>
     </div>
   );

@@ -1,3 +1,4 @@
+import AuthLayout from "../components/AuthLayout";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../services/api";
@@ -41,7 +42,7 @@ function ResetPassword() {
   };
 
   return (
-    <div className="auth-page">
+    <AuthLayout>
       <div className="auth-card">
         <div className="auth-logo">🔑</div>
 
@@ -54,7 +55,7 @@ function ResetPassword() {
         <form className="auth-form" onSubmit={handleSubmit}>
           <input
             type="password"
-            placeholder="New password"
+            aria-label="New password" autoComplete="new-password" placeholder="New password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -67,7 +68,7 @@ function ResetPassword() {
 
         {message && <div className={`auth-message${success ? "" : " error-message"}`} role={success ? "status" : "alert"}>{message}</div>}
       </div>
-    </div>
+    </AuthLayout>
   );
 }
 

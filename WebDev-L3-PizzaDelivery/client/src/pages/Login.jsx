@@ -1,3 +1,4 @@
+import AuthLayout from "../components/AuthLayout";
 import { useState } from "react";
 import {
   Link,
@@ -42,9 +43,9 @@ function Login() {
   };
 
   return (
-    <div className="auth-page">
+    <AuthLayout>
       <div className="auth-card">
-        <div className="auth-logo">🍕</div>
+        <div className="auth-logo" aria-hidden="true">PD</div>
 
         <h1>Welcome Back</h1>
 
@@ -71,7 +72,7 @@ function Login() {
         <form className="auth-form" onSubmit={handleSubmit}>
           <input
             type="email"
-            placeholder="Email address"
+            aria-label="Email address" autoComplete="email" placeholder="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -79,7 +80,7 @@ function Login() {
 
           <input
             type="password"
-            placeholder="Password"
+            aria-label="Password" autoComplete="current-password" placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -115,7 +116,7 @@ function Login() {
           </p>
         </div>
       </div>
-    </div>
+    </AuthLayout>
   );
 }
 

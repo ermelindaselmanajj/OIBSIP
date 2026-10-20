@@ -1,3 +1,4 @@
+import AuthLayout from "../components/AuthLayout";
 import { useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { adminApi } from "../services/api";
@@ -31,9 +32,9 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="auth-page">
+    <AuthLayout>
       <div className="auth-card">
-        <div className="auth-logo">🍕</div>
+        <div className="auth-logo" aria-hidden="true">PD</div>
         <h1>Admin Login</h1>
         <p className="auth-subtitle">Sign in with your administrator account.</p>
         {verification && <div className={verification.success ? 'success-popup' : 'auth-message error-message'} role={verification.success ? 'status' : 'alert'}>{verification.text}</div>}
@@ -45,6 +46,6 @@ export default function AdminLogin() {
         {message && <div className="auth-message error-message" role="alert">{message}</div>}
         <div className="auth-links"><Link to="/login">Customer login</Link></div>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

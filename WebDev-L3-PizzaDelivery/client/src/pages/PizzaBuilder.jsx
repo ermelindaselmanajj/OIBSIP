@@ -206,7 +206,7 @@ export default function PizzaBuilder() {
             ← Back to menu
           </button>
           <span className="pb-brand">
-            Pizza Delivery <span aria-hidden="true">🍕</span>
+            <span className="brand-mark" aria-hidden="true">PD</span> Pizza Delivery
           </span>
         </header>
 

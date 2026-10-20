@@ -1,3 +1,4 @@
+import AuthLayout from "../components/AuthLayout";
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
@@ -33,7 +34,7 @@ function ForgotPassword() {
   };
 
   return (
-    <div className="auth-page">
+    <AuthLayout>
       <div className="auth-card">
         <div className="auth-logo">🔐</div>
 
@@ -46,7 +47,7 @@ function ForgotPassword() {
         <form className="auth-form" onSubmit={handleSubmit}>
           <input
             type="email"
-            placeholder="Email address"
+            aria-label="Email address" autoComplete="email" placeholder="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -65,7 +66,7 @@ function ForgotPassword() {
           </p>
         </div>
       </div>
-    </div>
+    </AuthLayout>
   );
 }
 
